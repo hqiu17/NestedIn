@@ -285,36 +285,40 @@ public class NestedIn {
 		return query;
 	}
 	
-	// parse argument inputs
+	/**
+	 * parse command line input arguments
+	 * @param args
+	 */
 	private void parseArgumentInputs(String[] args){
 		CommandLineParser cparser = new DefaultParser();
 		
+		/** setup parameters */
 		Options coptions = new Options();
 		coptions.addOption("dir", "directory", true, "directory containing newick trees");
-		coptions.addOption("don", "donor(s)",  true, "donors; separate multiple donors with comma");
-		coptions.addOption("cut", "support_cutoff",  true, "node support cutoff");
-		coptions.addOption("opt", "optional_taxa",   true, "optional taxa in monophyletic ingroup");
-		coptions.addOption("ign", "ignored_taxa" ,   true,  "taxa to be ignored in monophyletic ingroup");
-		coptions.addOption("igs", "ingroup_seqs" ,   false, "to export sequences inclueded in monophyletic ingroup");
+		coptions.addOption("don", "donor",     true, "donor(s); separate multiple donors with comma");
+		coptions.addOption("cut", "cutoff",    true, "node support cutoff (default=0)");
+		coptions.addOption("opt", "optional_taxa",   true,  "optional taxa in monophyletic ingroup");
+		coptions.addOption("ign", "ignored_taxa" ,   true,  "taxa to be ignored while screening trees");
+		coptions.addOption("igs", "ingroup_info" ,   false, "export details of monophyletic ingroups");
 		
-		/*
+		/** issue to be solced
 		Option opt = Option.builder("opt1").required(false).longOpt("optional_taxa")
 				.desc("optional taxa interwining the monophyletic ingroup")
 				.build();
 		coptions.addOption(opt);
-		*/
 		
 		//args = new String[]{"-help"};
+		*/
 		
+		/** parse command line arguments */
 		try{
 			CommandLine line = cparser.parse(coptions, args);
 			if (line.hasOption("directory"))      this.dir   = line.getOptionValue("directory");
-			if (line.hasOption("donor(s)"))       this.donor = line.getOptionValue("donor(s)");
-			if (line.hasOption("support_cutoff")) this.cut   = Double.parseDouble(line.getOptionValue("support_cutoff")) ;
+			if (line.hasOption("donor"))          this.donor = line.getOptionValue("donor");
+			if (line.hasOption("cutoff"))         this.cut   = Double.parseDouble(line.getOptionValue("cutoff")) ;
 			if (line.hasOption("optional_taxa"))  this.optionals     = line.getOptionValue("optional_taxa");
 			if (line.hasOption("ignored_taxa"))   this.ignored       = line.getOptionValue("ignored_taxa");
-			if (line.hasOption("ingroup_seqs"))   this.getInGroupSeq = true;
-			
+			if (line.hasOption("ingroup_info"))   this.getInGroupSeq = true;			
 		}
 		catch( ParseException exp) {
 			System.out.println( "Unexpected exception:" + exp.getMessage());
@@ -322,11 +326,13 @@ public class NestedIn {
 			System.out.println("");
 			formatter.printHelp( "qsort.parse_tree", coptions );
 		}
-
+		
+		/** quit if no input directory is provided */
 		if (this.dir.isEmpty()) {
 			System.out.println("\nWarning: no input directory is specified");
 			System.exit(1);
 		}
+		/** quit if no donor taxa are provided */
 		if (this.donor.isEmpty()) {
 			System.out.println("\nWarning: no donor(s) is specified");
 			System.exit(1);
