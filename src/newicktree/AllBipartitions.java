@@ -7,11 +7,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.*; 
 
 public class AllBipartitions {
 	private int nbStrongMonophyleticNodes=0;
 	private int nbWeakMonophyleticNodes  =0;
 	private ArrayList<String> supportDonorsAndOptionals = new ArrayList<String>();
+	private ArrayList<String> Donors       = new ArrayList<String>();
+	private ArrayList<String> DonorsStrong = new ArrayList<String>();
 	ArrayList<List<String>> minorContaminationsStrongNodes = new ArrayList<List<String>>();
 	ArrayList<List<String>> minorContaminationsWeakNodes   = new ArrayList<List<String>>();
 
@@ -28,47 +31,87 @@ public class AllBipartitions {
 		visitAllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored);
 	}
 
-	/*
-	 * Core function
-	 * examine all bi-partitions and calculate nodes that support monophyly (strongly or weakly)
+	
+	/**
+	 * Go through a list if all bi-partitions, do tests and population class variables
+	 * @param bipartitions    a list containing all bi-partitions
+	 * @param query           query sequence
+	 * @param donor           donor taxa
+	 * @param support_cut     node cutoff
+	 * @param optionals       optional taxa allowed to be inside of monophyly
+	 * @param ignored         taxa to be ignored
 	 */
-	public void visitAllBipartitions(List<String> bipartitions, String query, String donor, double support_cut, String optionals, String ignored){
-		// A bipartition format: support-value + "\t" + one-half + "\t" + the-other-half 
-		//System.out.println(bipartitions);
-		//System.out.println("#AllBipartition l36: '" +" "+ query +" "+ donor +" " + optionals + "'\t'" + ignored +"'");
+	public void visitAllBipartitions(List<String> bipartitions,
+			                         String query,
+			                         String donor,
+		     						 double support_cut,
+		     						 String optionals,
+		     						 String ignored){
+
+		/**
+		 * loop through bi-partitions and test them one by one. 
+		 * each bi-partition is in the format: support-value   "TAB"   one-half   "TAB"   the-other-half 
+		 * */
 		for (String l : bipartitions) {
-			//@@@ non-exhaustive search (need to be more flexible here) 
+			
+			/**
+			 * if 2 or more strongly supported nodes, break out of loop
+			 * this non-exhaustive search speeds up entire job, because not all bi-partitions need to examined
+			 */ 
 			if ( nbStrongMonophyleticNodes >=2 ) break;
 			
+			
+			/** break down the bi-partition string */
 			String[] data = l.split("\t");
 			double mySupport = Double.parseDouble(data[1]) ;
 			String half01 = data[2].substring(1, data[2].length()-1);
 			String half02 = data[3].substring(1, data[3].length()-1);
-		
-			ABipartition bp = new ABipartition(half01+"\t"+ half02);
 			
+			/** examine the bi-partition in ABipatition class */
+			ABipartition bp = new ABipartition(half01+"\t"+ half02);
 			bp.checkIngroup(query, donor, optionals, ignored);
 			int aStatus = bp.getStatus();
-			//System.out.println ("#-> " + aStatus);
 			
-			if (aStatus >0) {
+			
+			if (aStatus >0) {				
+			/** if bi-partition supports query-donor monophyly */
+				
 				if (mySupport >= support_cut) {
-					nbStrongMonophyleticNodes += aStatus;
-					String record = new String();
-					record = Double.toString(mySupport) +"\t"+ String.join(",", bp.getDonorSeqs()) +"\t"+ String.join(",", bp.getOptionalSeqs());
-					supportDonorsAndOptionals.add(record);
+				/** if node supports query-donor monophyly */
 					
-					//System.out.println("#1alls " + aStatus);
-					//System.out.println("#2alls " + record);					
-				} else {
-					nbWeakMonophyleticNodes   += aStatus;
-					String record = new String();
+					/** add in-group donors to variable Donors */
+					donorPopulationInRecord(bp.getDonorSeqs());
+					
+					/** test if this donor-group already presents in DonorsStrong. if so, skip */
+					if (donorPopulationInRecordStrong(bp.getDonorSeqs())) continue;
+					
+					/** increment strong monophyletic node */
+					nbStrongMonophyleticNodes += aStatus;
+					
+					/** make record of in-group details */
+					String record = new String(); 
 					record = Double.toString(mySupport) +"\t"+ String.join(",", bp.getDonorSeqs()) +"\t"+ String.join(",", bp.getOptionalSeqs());
 					supportDonorsAndOptionals.add(record);
-					//System.out.println("#1allw " + aStatus);
-					//System.out.println("#2allw " + record);	
+				
+				} else {
+				/** if node does not support query-donor monophyly */
+					
+					/** test if this donor-group already met anywhere (in Donors). if so, skip */
+					if (donorPopulationInRecord(bp.getDonorSeqs())) continue;
+					
+					/** increment weak monophyletic node */
+					nbWeakMonophyleticNodes   += aStatus;
+					
+					/** make record of in-group details */
+					String record = new String();
+					record = Double.toString(mySupport) +"\t"+ String.join(",", bp.getDonorSeqs()) +"\t"+ String.join(",", bp.getOptionalSeqs());
+					supportDonorsAndOptionals.add(record);	
 				}
+				
 			} else if (aStatus == -1) {
+			/** in-group is adjustable containing minimal irrelevant sequences (<3)*/
+				
+				/** if the collection of irrelevant sequences has something */
 				if (! bp.getMinorContamination().isEmpty()) {
 					if (mySupport >= support_cut){
 						minorContaminationsStrongNodes.add(bp.getMinorContamination());
@@ -80,8 +123,63 @@ public class AllBipartitions {
 			
 		}
 	}
-
 	
+	/** 
+	 * this method is to generalize the following two similar function
+	 * Not done yet.
+	public boolean addAndReturn(List<String>multiDonorPopulations, List<String>allDonors) {
+		List<String> myDonorPopulation = new ArrayList<String>(allDonors);
+		Collections.sort(myDonorPopulation)
+		boolean status = true;
+		return status;
+	}
+	*/
+	
+	/**
+	 * Sort elements in allDonors and concatenate into comma (','), compare the 
+	 * resulting super-donor to class variable Donors.
+	 * Donors are defined by supporting nodes regardless of bootstrap value 
+	 * If the super-donor is in Donors, return true. 
+	 * Otherwise, return false and add the super-donor into Donors. 
+	 * @param allDonors
+	 * @return status
+	 */
+	private boolean donorPopulationInRecord(List<String>allDonors) {
+		boolean status = true;
+		List<String> mydonors = new ArrayList<String>(allDonors);
+		Collections.sort(mydonors);
+		String mydonorstring = new String();
+		mydonorstring = String.join(",",mydonors);
+		if (Donors.contains(mydonorstring)) {
+		} else {
+			Donors.add(mydonorstring);
+			status = false;
+		}
+		return status;
+	}
+	
+	/**
+	 * Sort elements in allDonors and concatenate into comma (','), compare the 
+	 * resulting super-donor to class variable DonorsStrong.
+	 * DonorsStrong are defined by supporting nodes with bootstrap value greater than cut-off 
+	 * If the super-donor is in Donors, return true. 
+	 * Otherwise, return false and add the super-donor into Donors. 
+	 * @param allDonors
+	 * @return status
+	 */
+	private boolean donorPopulationInRecordStrong(List<String>allDonors) {
+		boolean status = true;
+		List<String> mydonors = new ArrayList<String>(allDonors);
+		Collections.sort(mydonors);
+		String mydonorstring = new String();
+		mydonorstring = String.join(",",mydonors);
+		if (DonorsStrong.contains(mydonorstring)) {
+		} else {
+			DonorsStrong.add(mydonorstring);
+			status = false;
+		}
+		return status;
+	}	
 	/*
 	 * getters
 	 */

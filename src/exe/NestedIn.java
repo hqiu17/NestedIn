@@ -25,14 +25,14 @@ import progress.Bar;
 
 public class NestedIn {
 
-	private String dir       ="";
+	private String indir     ="";
 	private String donor     ="";
 	private double cut       = 0;
 	private String optionals ="";
 	private String ignored   ="";
 	private String outHGT    ="";
 	private String outDir    ="";
-	private boolean getInGroupSeq = false;
+	private boolean getInGroup = false;
 	
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
@@ -42,23 +42,28 @@ public class NestedIn {
 		/*  #a06.symmi.txt.tres/",
 		 * for test purpose 
 		 */
-		args = new String[]{"-dir", "/Users/Qcell/eclipse-workspace/a06.symmi.txt.tres/", 
-				"-don", "Bacteria,Archaea", "-cut", "85", "-opt","Alveolata", "-ign", "Cladosiphon,Hydra"};
+		//args = new String[]{"-dir", "/Users/Qcell/eclipse-workspace/a06.symmi.txt.tres/", 
+		//		"-don", "Bacteria,Archaea", "-cut", "85", "-opt","Alveolata", "-ign", "Cladosiphon,Hydra", //}; //,
+		//		"-out", "ax06"};
 
+
+		
 		// print arguments to standard output 
 		myParser.parseArgumentInputs(args);
-		System.out.println("direcotry:     " + myParser.dir);
+		myParser.setOutputFileAandDirectory();
+		System.out.println("direcotry:     " + myParser.indir);
 		System.out.println("donor(s):      " + myParser.donor);
 		System.out.println("cut-off:       " + myParser.cut);
 		System.out.println("optional taxa: " + myParser.optionals);
 		System.out.println("ignored taxa:  " + myParser.ignored);
+		//System.out.println("output tag:    " + myParser.outDir);
 		
 		// prepare output file name and setup output directory
-		myParser.setOutputFileAandDirectory();
+
 		
 		// tree parse heavy lifting and put results in an ArrayList 
 		ArrayList<String> nbNodesCoded = new ArrayList<String>();
-		nbNodesCoded = myParser.Adir(myParser.dir, myParser.donor, myParser.cut, myParser.optionals, myParser.ignored);
+		nbNodesCoded = myParser.Adir(myParser.indir, myParser.donor, myParser.cut, myParser.optionals, myParser.ignored);
 		
 		// write results to out-file
 		try {
@@ -198,7 +203,7 @@ public class NestedIn {
 				System.out.println("#-> errorous writing tree file: " + outputrees);
 			}
 			
-			if (getInGroupSeq) {
+			if (getInGroup) {
 				String outputInGroupSeqs = outDir + "/" + filename + ".igs.txt";
 				try {
 					FileWriter writer = new FileWriter(outputInGroupSeqs);
@@ -214,7 +219,7 @@ public class NestedIn {
 			
 			
 			
-			String outcome = query +"\t"+ test.getStrongNodes() +"\t"+ test.getWeakNodes();
+			String outcome = query +"\t"+ test.getStrongNodes() +"\t"+ test.getWeakNodes() +"\t"+ myFate;
 			//+"\t"+ test.getAdjustedStrongNodes() +"\t"+ myFate;
 			return outcome;
 		}
@@ -294,14 +299,19 @@ public class NestedIn {
 		
 		/** setup parameters */
 		Options coptions = new Options();
-		coptions.addOption("dir", "directory", true, "directory containing newick trees");
-		coptions.addOption("don", "donor",     true, "donor(s); separate multiple donors with comma");
-		coptions.addOption("cut", "cutoff",    true, "node support cutoff (default=0)");
-		coptions.addOption("opt", "optional_taxa",   true,  "optional taxa in monophyletic ingroup");
-		coptions.addOption("ign", "ignored_taxa" ,   true,  "taxa to be ignored while screening trees");
-		coptions.addOption("igs", "ingroup_info" ,   false, "export details of monophyletic ingroups");
+		coptions.addOption("dir", "indirectory", true,  "directory containing newick trees");
+		coptions.addOption("out", "output"     , true, "specify suffix for outputs");		
+		coptions.addOption("don", "donor"    , true,  "donor(s); separate multiple donors with comma");
+		coptions.addOption("cut", "cutoff"   , true,  "node support cutoff (default=0)");
+		coptions.addOption("opt", "optional" , true,  "optional taxa in monophyletic ingroup");
+		coptions.addOption("ign", "ignore"   , true,  "taxa to be ignored while screening trees");
+		coptions.addOption("igp", "ingroup"  , false, "export details of monophyletic ingroups");
+		coptions.addOption("h"  , "help"     , false, "list usage instruction");
 		
-		/** issue to be solced
+		
+		/** 
+		 * issue not yet solved
+		 
 		Option opt = Option.builder("opt1").required(false).longOpt("optional_taxa")
 				.desc("optional taxa interwining the monophyletic ingroup")
 				.build();
@@ -313,22 +323,31 @@ public class NestedIn {
 		/** parse command line arguments */
 		try{
 			CommandLine line = cparser.parse(coptions, args);
-			if (line.hasOption("directory"))      this.dir   = line.getOptionValue("directory");
-			if (line.hasOption("donor"))          this.donor = line.getOptionValue("donor");
-			if (line.hasOption("cutoff"))         this.cut   = Double.parseDouble(line.getOptionValue("cutoff")) ;
-			if (line.hasOption("optional_taxa"))  this.optionals     = line.getOptionValue("optional_taxa");
-			if (line.hasOption("ignored_taxa"))   this.ignored       = line.getOptionValue("ignored_taxa");
-			if (line.hasOption("ingroup_info"))   this.getInGroupSeq = true;			
+			
+			if (line.hasOption("help")) {
+				HelpFormatter formatter = new HelpFormatter();
+				System.out.println("");
+				formatter.printHelp( "NestedIn (version 01)", coptions );
+				System.exit(0);
+			}
+			
+			if (line.hasOption("indirectory"))  indir      = line.getOptionValue("indirectory");
+			if (line.hasOption("output"))       outHGT     = line.getOptionValue("output");			
+			if (line.hasOption("donor"))     donor         = line.getOptionValue("donor");
+			if (line.hasOption("cutoff"))    cut           = Double.parseDouble(line.getOptionValue("cutoff")) ;
+			if (line.hasOption("optional"))  optionals     = line.getOptionValue("optional");
+			if (line.hasOption("ignore"))    ignored       = line.getOptionValue("ignore");
+			if (line.hasOption("ingroup"))   getInGroup    = true;
 		}
 		catch( ParseException exp) {
 			System.out.println( "Unexpected exception:" + exp.getMessage());
 			HelpFormatter formatter = new HelpFormatter();
 			System.out.println("");
-			formatter.printHelp( "qsort.parse_tree", coptions );
+			formatter.printHelp( "NestedIn", coptions );
 		}
 		
 		/** quit if no input directory is provided */
-		if (this.dir.isEmpty()) {
+		if (indir.isEmpty()) {
 			System.out.println("\nWarning: no input directory is specified");
 			System.exit(1);
 		}
@@ -339,21 +358,25 @@ public class NestedIn {
 		}
 
 	}
-	/**
-	 * 
-	 * 
-	 */
+	
+	/** make output directory based on input arguments */
 	private void setOutputFileAandDirectory() {
-		outHGT = dir;
-		if (outHGT.endsWith("/")) outHGT = outHGT.substring(0, outHGT.length()-1);
-		outHGT = outHGT + ".From"+donor + "_Cut"+cut;
-		if ( ! optionals.isEmpty()) outHGT = outHGT + "_With" + optionals;
-		if ( ! ignored.isEmpty())  outHGT = outHGT + "_Ignr" + ignored;
-		outHGT = outHGT.replaceAll(",", "");
+		//System.out.println("Output: " + outHGT);
+		
+		/** if outHGT is not specified, make output directory based on input arguments */
+		if (outHGT.isEmpty()) {
+			outHGT = indir;
+			if (outHGT.endsWith("/")) outHGT = outHGT.substring(0, outHGT.length()-1);
+			outHGT = outHGT + ".From"+donor + "_Cut"+cut;
+			if ( ! optionals.isEmpty()) outHGT = outHGT + "_With" + optionals;
+			if ( ! ignored.isEmpty())  outHGT = outHGT + "_Ignr" + ignored;
+			outHGT = outHGT.replaceAll(",", "");
+		}
+		/** create output directory and figure out out-file */
 		outDir = outHGT + ".trees";
 		new File(outDir).mkdirs();
 		outHGT = outHGT + ".txt";
+		//System.out.println("Output: " + outDir);
 	}
-	
 	
 }
