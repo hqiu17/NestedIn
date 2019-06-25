@@ -192,7 +192,7 @@ public class NestedIn {
 		//+"\t"+ test.getAdjustedStrongNodes() + "\t" + myFate;
 		//System.out.println("#top " + outcome1);
 		
-		if (myFate != 0) {
+		if (myFate > 1 ) {
 			String outputrees = outDir + "/" + filename;
 			try{
 				FileWriter writer = new FileWriter(outputrees);
@@ -251,13 +251,13 @@ public class NestedIn {
 	private int fate (int strong, int weak, int fixed) {
 		int mystrong = strong + fixed;
 		if (mystrong >=2) {
-			return 9;
+			return 9;        // strong node
 		}else if (mystrong >=1 && weak>=1) {
-			return 2;
+			return 2;        // ok node
 		}else if (mystrong ==1) {
-			return 1;
+			return 1;        // weak node
 		}else {
-			return 0;
+			return 0;        // non-monophyletic node
 		}
 	}
 	
