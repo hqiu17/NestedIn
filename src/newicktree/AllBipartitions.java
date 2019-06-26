@@ -57,9 +57,10 @@ public class AllBipartitions {
 			/**
 			 * if 2 or more strongly supported nodes, break out of loop
 			 * this non-exhaustive search speeds up entire job, because not all bi-partitions need to examined
-			 */ 
+			 */
+			/** leave it for now
 			if ( nbStrongMonophyleticNodes >=2 ) break;
-			
+			*/
 			
 			/** break down the bi-partition string */
 			String[] data = l.split("\t");

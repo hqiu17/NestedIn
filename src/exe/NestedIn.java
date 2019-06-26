@@ -33,35 +33,36 @@ public class NestedIn {
 	private String outHGT    ="";
 	private String outDir    ="";
 	private boolean getInGroup = false;
+	private int minStrongNode  = 1;
+	private int minAllNode     = 2;
 	
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		
 		NestedIn myParser = new NestedIn();
 		
-		/*  #a06.symmi.txt.tres/",
-		 * for test purpose 
+		/**  
+		 * command line input for test purpose
 		 */
 		//args = new String[]{"-dir", "/Users/Qcell/eclipse-workspace/a06.symmi.txt.tres/", 
 		//		"-don", "Bacteria,Archaea", "-cut", "85", "-opt","Alveolata", "-ign", "Cladosiphon,Hydra", //}; //,
-		//		"-out", "ax06"};
+		//		"-out", "../ax06"};
 
-
-		
-		// print arguments to standard output 
+		/** parse input arguments */ 
 		myParser.parseArgumentInputs(args);
+		
+		/** prepare output file name and setup output directory */
 		myParser.setOutputFileAandDirectory();
+		
+		/** print out some key parameters onto terminal */
 		System.out.println("direcotry:     " + myParser.indir);
 		System.out.println("donor(s):      " + myParser.donor);
 		System.out.println("cut-off:       " + myParser.cut);
 		System.out.println("optional taxa: " + myParser.optionals);
 		System.out.println("ignored taxa:  " + myParser.ignored);
-		//System.out.println("output tag:    " + myParser.outDir);
-		
-		// prepare output file name and setup output directory
 
 		
-		// tree parse heavy lifting and put results in an ArrayList 
+		/** tree parse heavy lifting and put results in an ArrayList */
 		ArrayList<String> nbNodesCoded = new ArrayList<String>();
 		nbNodesCoded = myParser.Adir(myParser.indir, myParser.donor, myParser.cut, myParser.optionals, myParser.ignored);
 		
@@ -74,8 +75,11 @@ public class NestedIn {
 				hgtWriter.write(l+"\n");
 			}
 			hgtWriter.close();
+			
+
+			
 		} catch (IOException e) {
-			//System.out.println("#-> erronreous reading directory: ");
+			System.out.println("#-> errorous writting to file: " + myParser.outHGT);
 		}
 	
 		/* !!! hgtWriter::write woudn't work in pipe
@@ -89,7 +93,8 @@ public class NestedIn {
 		*/
 		
 		long endTime = System.currentTimeMillis();
-		System.out.println("Take " + (endTime - startTime)/1000 + " seconds.");
+		System.out.println("take " + (endTime - startTime)/1000 + " seconds.");
+		System.out.println( String.valueOf( nbNodesCoded.size() ) + " trees meet user criteria.");
 	}
 
 	/**
@@ -219,7 +224,8 @@ public class NestedIn {
 			
 			
 			
-			String outcome = query +"\t"+ test.getStrongNodes() +"\t"+ test.getWeakNodes() +"\t"+ myFate;
+			String outcome = query +"\t"+ test.getStrongNodes() +"\t"+ test.getWeakNodes() + "\t" + 
+					         (test.getStrongNodes() + test.getWeakNodes()) + "\t" + myFate;
 			//+"\t"+ test.getAdjustedStrongNodes() +"\t"+ myFate;
 			return outcome;
 		}
@@ -250,14 +256,15 @@ public class NestedIn {
 		
 	private int fate (int strong, int weak, int fixed) {
 		int mystrong = strong + fixed;
-		if (mystrong >=2) {
-			return 9;        // strong node
-		}else if (mystrong >=1 && weak>=1) {
-			return 2;        // ok node
+		int myall    = strong + weak + fixed;
+		if (mystrong > minStrongNode) {
+			return 9;        // strong support
+		}else if (mystrong == minStrongNode && myall >= minAllNode) {
+			return 2;        // ok support
 		}else if (mystrong ==1) {
-			return 1;        // weak node
+			return 1;        // weak support
 		}else {
-			return 0;        // non-monophyletic node
+			return 0;        // non-monophyletic support
 		}
 	}
 	
@@ -299,14 +306,18 @@ public class NestedIn {
 		
 		/** setup parameters */
 		Options coptions = new Options();
-		coptions.addOption("dir", "indirectory", true,  "directory containing newick trees");
-		coptions.addOption("out", "output"     , true, "specify suffix for outputs");		
-		coptions.addOption("don", "donor"    , true,  "donor(s); separate multiple donors with comma");
-		coptions.addOption("cut", "cutoff"   , true,  "node support cutoff (default=0)");
-		coptions.addOption("opt", "optional" , true,  "optional taxa in monophyletic ingroup");
-		coptions.addOption("ign", "ignore"   , true,  "taxa to be ignored while screening trees");
-		coptions.addOption("igp", "ingroup"  , false, "export details of monophyletic ingroups");
-		coptions.addOption("h"  , "help"     , false, "list usage instruction");
+		coptions.addOption("dir", "directory", true,  "input Directory containing newick trees");
+		coptions.addOption("out", "output"     , true,  "specify suffix for Output directory and files");		
+		coptions.addOption("don", "donor"      , true,  "Donor(s); separate multiple donors with comma");
+		coptions.addOption("cut", "cutoff"     , true,  "node support Cutoff (default=0)");
+		coptions.addOption("opt", "optional"   , true,  "Optional taxa in monophyletic ingroup");
+		coptions.addOption("ign", "ignore"     , true,  "taxa to be Ignored while screening trees");
+		
+		coptions.addOption("ssn", "ssnode"     , true,  "minimal Strongly Supported Nodes uniting query and donors (default=1)");
+		coptions.addOption("asn", "asnode"     , true,  "minimal number of All Supporting Nodes uniting query and donors (default=2)");
+		
+		coptions.addOption("igp", "ingroup"    , false, "export details of monophyletic Ingroups");
+		coptions.addOption("h"  , "help"       , false, "list usage instruction");
 		
 		
 		/** 
@@ -331,12 +342,18 @@ public class NestedIn {
 				System.exit(0);
 			}
 			
-			if (line.hasOption("indirectory"))  indir      = line.getOptionValue("indirectory");
-			if (line.hasOption("output"))       outHGT     = line.getOptionValue("output");			
+			if (line.hasOption("directory"))  indir      = line.getOptionValue("directory");
+			if (line.hasOption("output"))       outHGT     = line.getOptionValue("output");
+			
 			if (line.hasOption("donor"))     donor         = line.getOptionValue("donor");
-			if (line.hasOption("cutoff"))    cut           = Double.parseDouble(line.getOptionValue("cutoff")) ;
 			if (line.hasOption("optional"))  optionals     = line.getOptionValue("optional");
 			if (line.hasOption("ignore"))    ignored       = line.getOptionValue("ignore");
+
+			if (line.hasOption("cutoff"))    cut           = Double.parseDouble(line.getOptionValue("cutoff")) ;
+			
+			if (line.hasOption("ssnode"))    minStrongNode = Integer.parseInt(line.getOptionValue("ssnode"));
+			if (line.hasOption("asnode"))    minAllNode    = Integer.parseInt(line.getOptionValue("asnode"));
+			
 			if (line.hasOption("ingroup"))   getInGroup    = true;
 		}
 		catch( ParseException exp) {
