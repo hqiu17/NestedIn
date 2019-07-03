@@ -7,7 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.*; 
+import java.util.*;
+
 
 public class AllBipartitions {
 	private int nbStrongMonophyleticNodes=0;
@@ -87,21 +88,21 @@ public class AllBipartitions {
 					if (donorPopulationInRecordStrong(bp.getDonorSeqs())) continue;
 					
 					/** increment strong monophyletic node */
-					nbStrongMonophyleticNodes += aStatus;
+					//nbStrongMonophyleticNodes += aStatus;
 					
 					/** make record of in-group details */
 					String record = new String(); 
 					record = Double.toString(mySupport) +"\t"+ String.join(",", bp.getDonorSeqs()) +"\t"+ String.join(",", bp.getOptionalSeqs());
 					supportDonorsAndOptionals.add(record);
 				
-				} else {
+				} else if (mySupport > 0) {
 				/** if node does not support query-donor monophyly */
 					
 					/** test if this donor-group already met anywhere (in Donors). if so, skip */
 					if (donorPopulationInRecord(bp.getDonorSeqs())) continue;
 					
 					/** increment weak monophyletic node */
-					nbWeakMonophyleticNodes   += aStatus;
+					//nbWeakMonophyleticNodes   += aStatus;
 					
 					/** make record of in-group details */
 					String record = new String();
@@ -123,6 +124,13 @@ public class AllBipartitions {
 			}
 			
 		}
+		
+		
+		for (String record : DonorsStrong) {
+			if (Donors.contains(record)) Donors.remove(record);
+		}
+		nbStrongMonophyleticNodes = DonorsStrong.size();
+		nbWeakMonophyleticNodes = Donors.size();
 	}
 	
 	/** 
