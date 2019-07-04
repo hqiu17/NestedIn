@@ -1,7 +1,7 @@
 # UNDER CONSTRUCTION !
 
 # NestedIn
-NestedIn is a standalone command line tool for phylogenetic tree scanning for pattern of horizontal gene transfer. It is written in Java and can be run in any computater (Wondows, Mac, linux) with a Java installation. Simply download the jar file and that is it. There is no other softwares or packages that need to be installed.
+NestedIn is a standalone command line tool for phylogenetic tree scanning for pattern of horizontal gene transfer. It is a Java implementation of the HGT scanning tool that were used in research papers [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, linux) with a Java installation. Simply download the jar file and that is it. There is no other softwares or packages that need to be installed.
 
 ## 1. Test if your computer has Java installed
 In command prompt / terminal, type:
@@ -30,6 +30,7 @@ java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria,Archaea -cu
 ## 3. Why use NestedIn and what do you get from it?
 NestedIn searches for nested position of queries among donor sequences. A 'nested position' is a special type of query-donor monophyletic relations. It is defined as query-donor monophyletic relations supported by two or more interior nodes. For example, in fig. 1, query sequence 'Porphyridium_cruentum_contig_3789' and five proteobacterial (donor) sequences form a monophyletic group suggesting possible HGT between the two taxa. In Fig. 2, 'Porphyridium_cruentum_contig_3789' is nested among proteobacterial sequences with at least two highly supported nodes (black dots) supporting query-donor monoohyly. This nested position provides a more convincing evidence of HGT and indicates the direction of HGT (e.g., proteobacteria-to-rhodophyta in this case). NestedIn allows tree screening for simple query-donor monophyletic relations (e.g., as in Fig.1) with argument `-asn 1`.
 ![Rhodophyta-Porphyridium_cruentum_4panelsMask makeup](https://user-images.githubusercontent.com/41085300/60680875-10a56c80-9e5b-11e9-8bca-e03e64bf3300.png)
+Figures 1-4 are hypothetical trees created for solely illustrating purpose. The acutally trees can be downloaded from [The Porphyridium purpureum Genome Project](http://cyanophora.rutgers.edu/porphyridium/).
 
 There are quite a few phylogenetic tree sorting tools that are availabe at the moment. NestedIn is the only tool that targets 'nested position' and addresses the number of interior nodes that support query-donor monophyly. As outputs, NestedIn provides a list of tree names that meet uerser's search criteria and a directory containing the corresponidng tree files. If requested (argument `-igp`), it outputs, for each tree, the information of all the query-donor monophyletic clades inculded in the tree, including node support, donor sequences in the clade, and sequences of optional taxa that are allowed in the monophyletic clades.  
 
