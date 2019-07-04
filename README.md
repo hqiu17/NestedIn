@@ -29,7 +29,7 @@ java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria,Archaea -cu
 
 ## 3. Why use NestedIn and what do you get from it?
 NestedIn searches for nested position of queries among donor sequences. A 'nested position' is a special type of query-donor monophyletic relations. It is defined as query-donor monophyletic relations supported by two or more interior nodes. For example, in fig. 1, query sequence 'Porphyridium_cruentum_contig_3789' and five proteobacterial (donor) sequences form a monophyletic group suggesting possible HGT between the two taxa. In Fig. 2, 'Porphyridium_cruentum_contig_3789' is nested among proteobacterial sequences with at least two highly supported nodes (black dots) supporting query-donor monoohyly. This nested position provides a more convincing evidence of HGT and indicates the direction of HGT (e.g., proteobacteria-to-rhodophyta in this case). NestedIn allows tree screening for simple query-donor monophyletic relations (e.g., as in Fig.1) with argument `-asn 1`.
-
+![Rhodophyta-Porphyridium_cruentum_4panelsMask makeup](https://user-images.githubusercontent.com/41085300/60680875-10a56c80-9e5b-11e9-8bca-e03e64bf3300.png)
 
 There are quite a few phylogenetic tree sorting tools that are availabe at the moment. NestedIn is the only tool that targets 'nested position' and addresses the number of interior nodes that support query-donor monophyly. As outputs, NestedIn provides a list of tree names that meet uerser's search criteria and a directory containing the corresponidng tree files. If requested (argument `-igp`), it outputs, for each tree, the information of all the query-donor monophyletic clades inculded in the tree, including node support, donor sequences in the clade, and sequences of optional taxa that are allowed in the monophyletic clades.  
 
@@ -76,33 +76,31 @@ java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85
 This command set cutoff at 85. All interior nodes supporting query-donor monophyly with support values no less than 85 is considered strong supporting nodes.
 
 #### 4.3.3 -opt
-If **opt**ional taxa, e.g., Stramenopiles, are allowed to present in the dog-bacterial monophyletic group, then type:
+If **opt**ional taxa, e.g., Cyanidioschyzon in Fig. 3, are allowed to present in the query-bacterial monophyletic group, then type:
 ```
-java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -opt Stramenopiles
+java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -opt Cyanidioschyzon
 ```
-for more than one optional taxa, e.g., Stramenopiles + Rhizaria, type:
+for more than one optional taxa, e.g., Cyanidioschyzon and Galderia, type:
 ```
-java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -opt Stramenopiles,Rhizaria
+java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -opt Cyanidioschyzon,Galderia
 ```
+This option allows users to search for more ancient HGTs that were shared between query taxon and its closely related taxa. The sequences of optional taxa will be recorded and exported when argument `-igp` is on.
 
 #### 4.3.4 -ign
-To **ign**ore a taxon, e.g., cyanobacteria, while screening the tree files
+To **ign**ore a taxon, e.g., Xenopus in Fig. 4, while screening the tree files, type:
 ```
-java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -ign Cyanobacteria
+java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -ign Xenopus
 ```
-To ignore two or more taxa, e.g., Cyanobacteia and Proteobacteria, type:
-```
-java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -ign Cyanobacteria,Proteobacteria
-```
+This option allows users to ignore sequences from some taxa which they think might be problematic (e.g., contamination). The sequences of ignored taxa will be skipped while tree processing and will not be recorded by the program.
 
-#### 4.4.5 -igp
+#### 4.3.5 -igp
 To request details of query-donor monophyletic ingroup, type:
 ```
 java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -igp
 ```
-This information will be generated, for each tree meeting criteria, in output directory with one line for each node. Three columns represent node suport, donor sequences joined with comma ',', and sequences from optional taxa join with ',' (if '-pot' argument).   
+This information will be generated, for each tree meeting criteria, in output directory with one line for each node. Three columns represent node suport, donor sequences joined with comma ',', and sequences from optional taxa join with ',' (with '-opt' argument).   
 
-#### 4.4.6 -asn
+#### 4.3.6 -asn
 To specify minimal number of **a**ll **s**upporing **n**odes (regarless of supporting value) that supports query-donor monophyly. The default value for this parameter is 2 (i.e., defining a nested position).
 ```
 java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -asn 1
@@ -113,7 +111,7 @@ java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -as
 ```
 This command line scans for trees with three or more interior nodes supporting query-donor monophyly (enforced nested position requirement).
 
-#### 4.4.7 -ssn
+#### 4.3.7 -ssn
 To specify minimal number of **s**trongly **s**upported **n**odes (supporting value > cutoff) that supports query-donor monophyly. The default value for this parameter is 1.
 ```
 java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -ssn 2
