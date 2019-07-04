@@ -74,7 +74,7 @@ To specify **cut**off to define strongly supported nodes (default = 0).
 ```
 java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85
 ```
-This command set cutoff at 85. All interior nodes supporting query-donor monophyly with support values no less than 85 is considered strong supporting nodes.
+This command sets cutoff at 85. All interior nodes supporting query-donor monophyly with support values no less than 85 is considered strong supporting nodes.
 
 #### 4.3.3 -opt
 If **opt**ional taxa, e.g., Cyanidioschyzon in Fig. 3, are allowed to present in the query-bacterial monophyletic group, then type:
@@ -106,15 +106,15 @@ To specify minimal number of **a**ll **s**upporing **n**odes (regarless of suppo
 ```
 java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -asn 1
 ```
-This command line scans for trees with one or more interior nodes supporting query-donor monophyly (turing off nested position requirement).
+This command scans for trees with one or more interior nodes supporting query-donor monophyly (turing off nested position requirement).
 ```
 java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -asn 3
 ```
-This command line scans for trees with three or more interior nodes supporting query-donor monophyly (enforced nested position requirement).
+This command scans for trees with three or more interior nodes supporting query-donor monophyly (enforced nested position requirement).
 
 #### 4.3.7 -ssn
 To specify minimal number of **s**trongly **s**upported **n**odes (supporting value > cutoff) that supports query-donor monophyly. The default value for this parameter is 1.
 ```
 java -jar ~/Desktop/NestedIn.jar -dir ~/Desktop/mybush -don Bacteria -cut 85 -ssn 2
 ```
-This command line scans for trees with two or more nodes (with supporing values > cutoff) supporting query-donor monophyly (enforced nested position requirement).
+This command scans for trees with two or more nodes (with supporing values ≥ 85) supporting query-donor monophyly (enforced nested position requirement).
