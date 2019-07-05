@@ -9,8 +9,8 @@ import java.lang.Thread;
  */
 public class Bar {
 	//private double size = new Double(0);
-	private int size = new Integer(0);
-	private double resolution = new Double(0.025);
+	private int size = 0;
+	private double resolution = 0.025;
 	private int record = -1;
 	private String mark = "-";
 	private String fullBar = "";
@@ -53,7 +53,7 @@ public class Bar {
 		/* translate percentage into bar length. */
 		int height = (int)(percentage/resolution);
 		
-		/*
+		/**
 		 * Overlay progress bar onto blank background and print progress bar only
 		 * when count triggers bar growth 
 		 */

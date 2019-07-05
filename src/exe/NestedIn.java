@@ -33,8 +33,10 @@ public class NestedIn {
 	private String outHGT    ="";
 	private String outDir    ="";
 	private boolean getInGroup = false;
-	private int minStrongNode  = 1;
-	private int minAllNode     = 2;
+	private int    minStrongNode  = 1;
+	private int    minAllNode     = 2;
+	private String basicCmd  = "java -jar NestedIn.jar -dir mydirectory -don mydonor ...";
+	private String version   = "NestedIn (v01)";
 	
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
@@ -54,30 +56,37 @@ public class NestedIn {
 		/** prepare output file name and setup output directory */
 		myParser.setOutputFileAandDirectory();
 		
-		/** print out some key parameters onto terminal */
+		/** print out mandatory parameters onto console */
 		System.out.println("direcotry:     " + myParser.indir);
 		System.out.println("donor(s):      " + myParser.donor);
 		System.out.println("cut-off:       " + myParser.cut);
-		System.out.println("optional taxa: " + myParser.optionals);
-		System.out.println("ignored taxa:  " + myParser.ignored);
-
 		
-		/** tree parse heavy lifting and put results in an ArrayList */
+		/** print out optional parameters onto console */
+		if (myParser.optionals.length()>0) System.out.println("optional taxa: " + myParser.optionals);
+		if (myParser.ignored.length()>0)   System.out.println("ignored taxa:  " + myParser.ignored);
+		if (myParser.minStrongNode>1)      System.out.println("strong node number cutoff: " + Integer.toString(myParser.minStrongNode));
+		if (myParser.minStrongNode>2) {
+			if (myParser.minStrongNode>1) {
+				System.out.println("all node number cutoff   : " + Integer.toString(myParser.minAllNode));
+			} else {
+				System.out.println("all node number cutoff: " + Integer.toString(myParser.minAllNode));
+			}
+		}
+		
+		/** 
+		 * Go through all trees in the input directory and collect coded supporting node information  
+		 * and write to output file
+		 */
 		ArrayList<String> nbNodesCoded = new ArrayList<String>();
 		nbNodesCoded = myParser.Adir(myParser.indir, myParser.donor, myParser.cut, myParser.optionals, myParser.ignored);
 		
-		// write results to out-file
 		try {
 			FileWriter hgtWriter = new FileWriter(myParser.outHGT);
-			//hgtWriter.write("Gene\tStronglySupprtedNode(up to 2)\tWeaklySupprtedNode\tAdjustedNode\tStatus\n");
-			hgtWriter.write("Gene\tNum.Node(>="+Double.toString(myParser.cut)+")"+"\tNum.Node(<"+Double.toString(myParser.cut)+")\n");
+			hgtWriter.write("Gene\tNum.Node(>="+Double.toString(myParser.cut)+")"+"\tNum.Node(<"+Double.toString(myParser.cut)+")\tTotal\n");
 			for (String l : nbNodesCoded) {
 				hgtWriter.write(l+"\n");
 			}
-			hgtWriter.close();
-			
-
-			
+			hgtWriter.close();			
 		} catch (IOException e) {
 			System.out.println("#-> errorous writting to file: " + myParser.outHGT);
 		}
@@ -97,25 +106,30 @@ public class NestedIn {
 		System.out.println( String.valueOf( nbNodesCoded.size() ) + " trees meet user criteria.");
 	}
 
-	/**
-	 * process a directory
-	 * return a list comprising coded nodes combination for each tree:
+	/** 
+	 * Take a directory as input and test monophyly for each tree	
+	 * @param dir
+	 * @param donor
+	 * @param cut
+	 * @param optionals
+	 * @param ignored
+	 * @return a list of qualifying tree and the supporting node information
 	 */
 	public ArrayList<String> Adir (String dir, String donor, double cut, String optionals, String ignored) {
 		ArrayList<String> results = new ArrayList<String>();
 		
-		// read directory and create a list containing all tree files
-		// and set up progress object
+		/** setup directory path, create an empty list to hold output and initiate progress bar*/
 		Path dp = Paths.get(dir);
 		List<Path> files = new ArrayList<Path>();
 		Bar progress = new Bar (200);
+		
+		/** read input directory, record tree list and set sample size for progress bar*/
 		try{
 			files = Files.walk(dp,1)
 					.skip(1)
 					.filter(x->x.toString().matches("(.+)tree|(.+)tre"))
 					.filter(x->Files.isRegularFile(x))
 					.collect(Collectors.toList());
-					//.toArray();
 			int size = files.size();
 			progress = new Bar (size);
 		}
@@ -123,7 +137,7 @@ public class NestedIn {
 			System.out.println("#1-> erronreous reading directory: " + dir);
 		}
 		
-		// loop through all trees
+		/** loop through all trees and collect result*/
 		int count=1;
 		for ( Path tree : files ) {
 			String code = Atree(tree.toString(), donor, cut, optionals, ignored);
@@ -135,12 +149,17 @@ public class NestedIn {
 		return results;
 	}
 	
-	/**
-	 * Examine a single tree file
-	 * If input tree meets criteria, 1) write the tree the output directory
-	 * 		2) return a string encoding nodes support:
-	 * 		"query \t strong supported nodes \t weakly supported nodes \t adjusted nodes"
-	 * On failed tree, only return a empty string
+	/** 
+	 * examine a single tree. If input tree meets criteria, 
+	 * 1) write the tree the output directory
+	 * 2) return a string encoding node information: "query \t strong nodes \t weak nodes \t all nodes"
+	 * if input tree fails, return an empty string
+	 * @param intree
+	 * @param donor
+	 * @param cut
+	 * @param optionals
+	 * @param ignored
+	 * @return string
 	 */
 	public String Atree (String intree, String donor, double cut, String optionals, String ignored) {
 
@@ -173,7 +192,7 @@ public class NestedIn {
 		test.testExclusive();
 		//test.testGeneralized();		
 		
-		/* to be updated in futher version: 
+		/* to be updated in future version: 
 		 * write bipartitions to output file
 		 * 
 		String outfile = intree + ".table.txt";
@@ -185,19 +204,17 @@ public class NestedIn {
 			writer.close();
 		}
 		catch(IOException e){
-			System.out.println("#-> errorous writing file: " + outfile);
+			System.out.println("#-> erroreus writing file: " + outfile);
 		}
 		*/
 		
-		// check if tree meet requirement (at least one node support monophyly), then
-		// export input tree to output directory		
+
+		/** get destine of the input tree */
 		int myFate = fate(test.getStrongNodes(), test.getWeakNodes(), test.getAdjustedStrongNodes());
-		//## test code
-		//String outcome1 = query +"\t"+ test.getStrongNodes() +"\t"+ test.getWeakNodes() 
-		//+"\t"+ test.getAdjustedStrongNodes() + "\t" + myFate;
-		//System.out.println("#top " + outcome1);
 		
+		/** if input tree meet criteria, do the following */
 		if (myFate > 1 ) {
+			/** 1) write input tree to output directory */
 			String outputrees = outDir + "/" + filename;
 			try{
 				FileWriter writer = new FileWriter(outputrees);
@@ -208,6 +225,7 @@ public class NestedIn {
 				System.out.println("#-> errorous writing tree file: " + outputrees);
 			}
 			
+			/** 2) if requested, write ingroup details to output directory */
 			if (getInGroup) {
 				String outputInGroupSeqs = outDir + "/" + filename + ".igs.txt";
 				try {
@@ -222,11 +240,12 @@ public class NestedIn {
 				}
 			}
 			
-			
-			
-			String outcome = query +"\t"+ test.getStrongNodes() +"\t"+ test.getWeakNodes() + "\t" + 
-					         (test.getStrongNodes() + test.getWeakNodes()) + "\t" + myFate;
-			//+"\t"+ test.getAdjustedStrongNodes() +"\t"+ myFate;
+			/** 3) make coded node information and return */
+			String outcome = query +"\t"+ 
+							 test.getStrongNodes() +"\t"+ 
+							 test.getWeakNodes() + "\t" + 
+					         (test.getStrongNodes() + test.getWeakNodes())
+					         ;
 			return outcome;
 		}
 		
@@ -306,18 +325,22 @@ public class NestedIn {
 		
 		/** setup parameters */
 		Options coptions = new Options();
+		
+		coptions.addOption("h"  , "help"       , false, "print usage instruction");
+		coptions.addOption("v"  , "version"    , false, "print version number");
+		
 		coptions.addOption("dir", "directory", true,  "input Directory containing newick trees");
-		coptions.addOption("out", "output"     , true,  "specify suffix for Output directory and files");		
 		coptions.addOption("don", "donor"      , true,  "Donor(s); separate multiple donors with comma");
-		coptions.addOption("cut", "cutoff"     , true,  "node support Cutoff (default=0)");
-		coptions.addOption("opt", "optional"   , true,  "Optional taxa in monophyletic ingroup");
+
+		coptions.addOption("cut", "cutoff"     , true,  "node support Cutoff (default=0)");		
+		coptions.addOption("out", "output"     , true,  "specify suffix for Output directory and files");		
+
+		coptions.addOption("opt", "optional"   , true,  "Optional taxa allowed in monophyletic ingroup");
 		coptions.addOption("ign", "ignore"     , true,  "taxa to be Ignored while screening trees");
+		coptions.addOption("igp", "ingroup"    , false, "export details of monophyletic Ingroups");
 		
 		coptions.addOption("ssn", "ssnode"     , true,  "minimal Strongly Supported Nodes uniting query and donors (default=1)");
 		coptions.addOption("asn", "asnode"     , true,  "minimal number of All Supporting Nodes uniting query and donors (default=2)");
-		
-		coptions.addOption("igp", "ingroup"    , false, "export details of monophyletic Ingroups");
-		coptions.addOption("h"  , "help"       , false, "list usage instruction");
 		
 		
 		/** 
@@ -331,14 +354,20 @@ public class NestedIn {
 		//args = new String[]{"-help"};
 		*/
 		
+		HelpFormatter formatter = new HelpFormatter();
+		/** add null comparator so options are sorted in original order */
+		formatter.setOptionComparator(null);
+		
 		/** parse command line arguments */
 		try{
 			CommandLine line = cparser.parse(coptions, args);
 			
-			if (line.hasOption("help")) {
-				HelpFormatter formatter = new HelpFormatter();
-				System.out.println("");
-				formatter.printHelp( "NestedIn (version 01)", coptions );
+			if (args.length == 0 | line.hasOption("help")) {
+				formatter.printHelp( basicCmd, coptions );
+				System.exit(0);
+			}
+			if (line.hasOption("version")) {
+				System.out.println(version);
 				System.exit(0);
 			}
 			
@@ -357,20 +386,20 @@ public class NestedIn {
 			if (line.hasOption("ingroup"))   getInGroup    = true;
 		}
 		catch( ParseException exp) {
-			System.out.println( "Unexpected exception:" + exp.getMessage());
-			HelpFormatter formatter = new HelpFormatter();
+			System.out.println( "Unexpected exception: " + exp.getMessage());
 			System.out.println("");
-			formatter.printHelp( "NestedIn", coptions );
+			formatter.printHelp( basicCmd, coptions );
+			System.exit(1);
 		}
 		
 		/** quit if no input directory is provided */
 		if (indir.isEmpty()) {
-			System.out.println("\nWarning: no input directory is specified");
+			System.out.println("Warning: no input directory is specified");
 			System.exit(1);
 		}
 		/** quit if no donor taxa are provided */
 		if (this.donor.isEmpty()) {
-			System.out.println("\nWarning: no donor(s) is specified");
+			System.out.println("Warning: no donor(s) is specified");
 			System.exit(1);
 		}
 
@@ -386,7 +415,14 @@ public class NestedIn {
 			if (outHGT.endsWith("/")) outHGT = outHGT.substring(0, outHGT.length()-1);
 			outHGT = outHGT + ".From"+donor + "_Cut"+cut;
 			if ( ! optionals.isEmpty()) outHGT = outHGT + "_With" + optionals;
-			if ( ! ignored.isEmpty())  outHGT = outHGT + "_Ignr" + ignored;
+			if ( ! ignored.isEmpty())   outHGT = outHGT + "_Ign" + ignored;
+			if (minStrongNode>1) {
+				outHGT = outHGT + "_Ssn" + Integer.toString(minStrongNode);
+				if (minAllNode>2) outHGT = outHGT + "Asn" + Integer.toString(minAllNode);
+			}else {
+				if (minAllNode>2) outHGT = outHGT + "_Asn" + Integer.toString(minAllNode);
+			}
+				
 			outHGT = outHGT.replaceAll(",", "");
 		}
 		/** create output directory and figure out out-file */
