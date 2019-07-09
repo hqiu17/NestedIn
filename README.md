@@ -1,7 +1,5 @@
-# UNDER CONSTRUCTION !
-
 # NestedIn
-NestedIn is a standalone command line tool for phylogenetic tree scanning for pattern of horizontal gene transfer. It is a Java implementation of the HGT scanning tool that were used in research papers [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, linux) with a Java installation. Simply download the jar file and that is it. There is no other softwares or packages that need to be installed.
+NestedIn is a standalone command line tool for phylogenetic tree scanning for pattern of horizontal gene transfer. It is a Java implementation of the HGT scanning tool that were originally used in research papers [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, linux) with a Java installation. Simply download the jar file and that is it. There is no other softwares or packages that need to be installed.
 
 ## 1. Test if your computer has Java installed
 In command prompt / terminal, type:
@@ -18,7 +16,7 @@ If no version is reported, you likely have no java.
 If no verson is reported, then you probably do not have java installed yet. Go to the java download page  https://www.oracle.com/technetwork/java/javase/downloads/index.html and download the latest version of JDK.
 
 ## 2. Quick start:
-Download the NestedIn.jar to, for example, your desktop "\~/Desktop". And download the Example_data.tar.zip to your desktop "\~/Desktop". Unzip the Example_data directory that contains a example input directory 'mytrees' and example outputs 'exampleOutput.trees' and 'exampleOutput.txt'. Now you want to find all trees having the query nested within proteobacterial sequences and at least one of the interier nodes supporting query-bacteria monophyly have high enough bootstraps (that's say 90), so type in terminal console:
+Download the NestedIn.jar https://github.com/HUAN-QIU/NestedIn/releases/tag/v1.0 and save the jar file to, for example, your desktop "\~/Desktop". And download the Example_data.tar.zip to your desktop "\~/Desktop". Unzip the Example_data directory that contains a example input directory 'mytrees' and example outputs 'exampleOutput.trees' and 'exampleOutput.txt'. Now you want to find all trees having the query nested within proteobacterial sequences and at least one of the interier nodes supporting query-bacteria monophyly have high enough bootstraps (that's say 90), so type in terminal console:
 ```
 cd ~/Desktop/Example_data
 java -jar ~/Desktop/NestedIn.jar -dir mytrees -don Proteoacteria -cut 90
