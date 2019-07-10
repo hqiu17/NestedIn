@@ -1,5 +1,5 @@
 # NestedIn
-NestedIn is a standalone command line tool for phylogenetic tree scanning for pattern of horizontal gene transfer. It is a Java implementation of the HGT scanning tool that were originally used in research papers [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, linux) with a Java installation. Simply download the jar file and that is it. There is no other softwares or packages that need to be installed.
+NestedIn is a standalone command line tool for phylogenetic tree scanning for pattern of horizontal gene transfer. It is a Java implementation of the HGT scanning tool that were used in research papers, Fan et al (in submission), [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, linux) with a Java installation. Simply download the jar file and that is it. There is no other softwares or packages that need to be installed.
 
 ## 1. Test if your computer has Java installed
 In command prompt / terminal, type:
