@@ -45,7 +45,7 @@ public class Bar {
 	 * line in terminal console and redraw progress bar
 	 * @param count, raw count of how many jobs are done
 	 */
-	public void grow(double count) {
+	public synchronized void grow(double count) {
 		/* calculate percentage. */
 		double percentage = count/size;
 		/* Turn percentage to zero if percentage is too small. */
@@ -62,7 +62,7 @@ public class Bar {
 			sRepeated = sRepeated + '>';
 			sRepeated = (sRepeated + fullBar).substring(0, fullBarLen);
 			String percentage3decimal = alignDoubleToLeft(percentage, 5);
-			System.out.print(sRepeated + percentage3decimal + "\r");		
+			System.out.print(sRepeated + percentage3decimal + "\r");
 			record = height;
 		}
 	}
