@@ -1,6 +1,30 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package exe;
 
-import java.io.BufferedReader;
+/**
+ * The class NestedIn scans a directory of tree files for user
+ * specified pattern.
+ *
+ * @author  Huan Qiu
+ * @version 2.0
+ */
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,16 +34,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
-import newicktree.NewickTree;
-import newicktree.TestMonophyly;
 import progress.Bar;
 
 
@@ -35,21 +55,15 @@ public class NestedIn {
 	private boolean getInGroup = false;
 	private int    minStrongNode  = 1;
 	private int    minAllNode     = 2;
+	private int    thread         = 1;
 	private String basicCmd  = "java -jar NestedIn.jar -dir mydirectory -don mydonor ...";
-	private String version   = "NestedIn (v01)";
+	private String version   = "NestedIn (v2.0)";
 	
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		
 		NestedIn myParser = new NestedIn();
 		
-		/**  
-		 * command line input for test purpose
-		 */
-		//args = new String[]{"-dir", "/Users/Qcell/eclipse-workspace/a06.symmi.txt.tres/", 
-		//		"-don", "Bacteria,Archaea", "-cut", "85", "-opt","Alveolata", "-ign", "Cladosiphon,Hydra", //}; //,
-		//		"-out", "../ax06"};
-
 		/** parse input arguments */ 
 		myParser.parseArgumentInputs(args);
 		
@@ -74,11 +88,11 @@ public class NestedIn {
 		}
 		
 		/** 
-		 * Go through all trees in the input directory and collect coded supporting node information  
+		 * Process an input directory and collect coded supporting node information  
 		 * and write to output file
 		 */
 		ArrayList<String> nbNodesCoded = new ArrayList<String>();
-		nbNodesCoded = myParser.Adir(myParser.indir, myParser.donor, myParser.cut, myParser.optionals, myParser.ignored);
+		nbNodesCoded = myParser.Adir();
 		
 		try {
 			FileWriter hgtWriter = new FileWriter(myParser.outHGT);
@@ -90,38 +104,25 @@ public class NestedIn {
 		} catch (IOException e) {
 			System.out.println("#-> errorous writting to file: " + myParser.outHGT);
 		}
-	
-		/* !!! hgtWriter::write woudn't work in pipe
-		try {
-			FileWriter hgtWriter = new FileWriter(outHGT);
-			nbNodesCoded.stream().forEach(hgtWriter::write);
-			hgtWriter.close();
-		} catch (IOException e) {
-			//System.out.println("#-> erronreous reading directory: ");
-		}
-		*/
 		
+		/** print out job run time */
 		long endTime = System.currentTimeMillis();
 		System.out.println("take " + (endTime - startTime)/1000 + " seconds.");
 		System.out.println( String.valueOf( nbNodesCoded.size() ) + " trees meet user criteria.");
 	}
 
 	/** 
-	 * Take a directory as input and test monophyly for each tree	
-	 * @param dir
-	 * @param donor
-	 * @param cut
-	 * @param optionals
-	 * @param ignored
+	 * Take the mandatory argument indir as an input and test monophyly for each tree inside of it	
 	 * @return a list of qualifying tree and the supporting node information
 	 */
-	public ArrayList<String> Adir (String dir, String donor, double cut, String optionals, String ignored) {
+	public ArrayList<String> Adir () {
 		ArrayList<String> results = new ArrayList<String>();
 		
 		/** setup directory path, create an empty list to hold output and initiate progress bar*/
-		Path dp = Paths.get(dir);
+		Path dp = Paths.get(indir);
 		List<Path> files = new ArrayList<Path>();
 		Bar progress = new Bar (200);
+		int size = 100;
 		
 		/** read input directory, record tree list and set sample size for progress bar*/
 		try{
@@ -130,192 +131,37 @@ public class NestedIn {
 					.filter(x->x.toString().matches("(.+)tree|(.+)tre"))
 					.filter(x->Files.isRegularFile(x))
 					.collect(Collectors.toList());
-			int size = files.size();
+			size = files.size();
 			progress = new Bar (size);
 		}
 		catch (IOException e) {
-			System.out.println("#1-> erronreous reading directory: " + dir);
+			System.out.println("#1-> erronreous reading directory: " + indir);
+		}
+	
+		/** create thread-safe class to count finished tree*/
+		CountSyn count = new CountSyn();
+		
+		/** create and launch tasks in parallel*/
+		ArrayList<Task> tasks = new ArrayList<Task>(); 
+		for (int i=1; i<=thread; i++) {
+			Task task = new Task(files, count, donor, cut, optionals, ignored, 
+					        minStrongNode, minAllNode, results, outDir, getInGroup, progress);
+			tasks.add(task);
+			task.start();
 		}
 		
-		/** loop through all trees and collect result*/
-		int count=1;
-		for ( Path tree : files ) {
-			String code = Atree(tree.toString(), donor, cut, optionals, ignored);
-			if (!code.isEmpty()) results.add(code);
-			progress.grow(count);
-			count++;
+		/** wait for the join of all task threads*/
+		for (Task task: tasks) {
+			try {
+				task.join();
+			}catch(Exception e){
+				System.out.println("task join error " + e);	
+			}
 		}
 		
 		return results;
 	}
-	
-	/** 
-	 * examine a single tree. If input tree meets criteria, 
-	 * 1) write the tree the output directory
-	 * 2) return a string encoding node information: "query \t strong nodes \t weak nodes \t all nodes"
-	 * if input tree fails, return an empty string
-	 * @param intree
-	 * @param donor
-	 * @param cut
-	 * @param optionals
-	 * @param ignored
-	 * @return string
-	 */
-	public String Atree (String intree, String donor, double cut, String optionals, String ignored) {
 
-		String query = getQuery(intree);
-		if (query.isEmpty()) return "";
-		String filename = intree.substring(intree.lastIndexOf("/")+1);
-	
-		// read input tree file (get the first line actually)
-		Path fp = Paths.get(intree);
-		String line = new String("");
-		try {
-			BufferedReader reader = Files.newBufferedReader(fp);
-			while (true) {
-				line = reader.readLine();
-				break;
-			}
-			reader.close();
-		}
-		catch(IOException e){
-			System.out.println("#-> erronreous reading file: " + intree);
-		}
-		
-		
-		if (line == null) return "";
-		
-		// create NewickTree object and launch decomposition
-		NewickTree tree = new NewickTree(line);
-		List<String> bp = tree.getBipartitions(query);
-		TestMonophyly test = new TestMonophyly(bp, query, donor, cut, optionals, ignored);
-		test.testExclusive();
-		//test.testGeneralized();		
-		
-		/* to be updated in future version: 
-		 * write bipartitions to output file
-		 * 
-		String outfile = intree + ".table.txt";
-		try{
-			FileWriter writer = new FileWriter(outfile);
-			for (String i : bp) {
-				writer.write(i+"\n");
-			}
-			writer.close();
-		}
-		catch(IOException e){
-			System.out.println("#-> erroreus writing file: " + outfile);
-		}
-		*/
-		
-
-		/** get destine of the input tree */
-		int myFate = fate(test.getStrongNodes(), test.getWeakNodes(), test.getAdjustedStrongNodes());
-		
-		/** if input tree meet criteria, do the following */
-		if (myFate > 1 ) {
-			/** 1) write input tree to output directory */
-			String outputrees = outDir + "/" + filename;
-			try{
-				FileWriter writer = new FileWriter(outputrees);
-				writer.write(line + "\n");
-				writer.close();
-			}
-			catch(IOException e){
-				System.out.println("#-> errorous writing tree file: " + outputrees);
-			}
-			
-			/** 2) if requested, write ingroup details to output directory */
-			if (getInGroup) {
-				String outputInGroupSeqs = outDir + "/" + filename + ".igs.txt";
-				try {
-					FileWriter writer = new FileWriter(outputInGroupSeqs);
-					for (String seqs : test.getSupportDonorsAndOptionals()) {
-						writer.write(seqs + "\n");
-					}
-					writer.close();
-				}
-				catch(IOException e) {
-					System.out.println("#-> errorous file writing to: " + outputInGroupSeqs);
-				}
-			}
-			
-			/** 3) make coded node information and return */
-			String outcome = query +"\t"+ 
-							 test.getStrongNodes() +"\t"+ 
-							 test.getWeakNodes() + "\t" + 
-					         (test.getStrongNodes() + test.getWeakNodes())
-					         ;
-			return outcome;
-		}
-		
-		return "";
-	}
-	public String Atree (String intree, String donor, double cut, String optionals) {
-		String ignored = new String();
-		return Atree(intree, donor, cut, optionals, ignored);
-	}
-	public String Atree (String intree, String donor, double cut) {
-		String optionals = new String();
-		String ignored = new String();
-		return Atree(intree, donor, cut, optionals, ignored);
-	}
-	public String Atree (Path intree, String donor, double cut, String optionals, String ignored) {
-		String str = intree.toString();
-		return Atree(str, donor, cut, optionals, ignored);
-	}
-	public String Atree (Path intree, String donor, double cut, String optionals) {
-		String str = intree.toString();
-		return Atree(str, donor, cut, optionals);
-	}
-	public String Atree (Path intree, String donor, double cut) {
-		String str = intree.toString();
-		return Atree(str, donor, cut);
-	}
-		
-	private int fate (int strong, int weak, int fixed) {
-		int mystrong = strong + fixed;
-		int myall    = strong + weak + fixed;
-		if (mystrong > minStrongNode) {
-			return 9;        // strong support
-		}else if (mystrong == minStrongNode && myall >= minAllNode) {
-			return 2;        // ok support
-		}else if (mystrong ==1) {
-			return 1;        // weak support
-		}else {
-			return 0;        // non-monophyletic support
-		}
-	}
-	
-	
-	// figure out query name from the file name using "_2refseq" as marker
-	// ??? to be thrown here
-	public String getQuerySpecial(String input, String mark) {
-		String query = null;
-		int index_ending = 0;
-		int index_leading = input.lastIndexOf("/");
-		
-		if (index_leading != -1) {
-			index_ending = input.indexOf(mark, index_leading);
-		} else {
-			index_ending = input.indexOf(mark);
-		}
-		
-		if (index_ending != -1) {
-			query = input.substring(index_leading+1,index_ending);
-		} 
-		return query;
-	}
-	
-	public String getQuery(String input) {
-		String query = null;
-		query = getQuerySpecial(input, "_2refseq");
-		if (query == null) query = getQuerySpecial(input, ".contre");
-		if (query == null) query = getQuerySpecial(input, ".tre");
-		if (query == null) query = getQuerySpecial(input, ".");
-		return query;
-	}
-	
 	/**
 	 * parse command line input arguments
 	 * @param args
@@ -329,7 +175,7 @@ public class NestedIn {
 		coptions.addOption("h"  , "help"       , false, "print usage instruction");
 		coptions.addOption("v"  , "version"    , false, "print version number");
 		
-		coptions.addOption("dir", "directory", true,  "input Directory containing newick trees");
+		coptions.addOption("dir", "directory"  , true,  "input Directory containing newick trees");
 		coptions.addOption("don", "donor"      , true,  "Donor(s); separate multiple donors with comma");
 
 		coptions.addOption("cut", "cutoff"     , true,  "node support Cutoff (default=0)");		
@@ -342,17 +188,7 @@ public class NestedIn {
 		coptions.addOption("ssn", "ssnode"     , true,  "minimal Strongly Supported Nodes uniting query and donors (default=1)");
 		coptions.addOption("asn", "asnode"     , true,  "minimal number of All Supporting Nodes uniting query and donors (default=2)");
 		
-		
-		/** 
-		 * issue not yet solved
-		 
-		Option opt = Option.builder("opt1").required(false).longOpt("optional_taxa")
-				.desc("optional taxa interwining the monophyletic ingroup")
-				.build();
-		coptions.addOption(opt);
-		
-		//args = new String[]{"-help"};
-		*/
+		coptions.addOption("thd", "thread"     , true,  "number of threads to use (default=1)");
 		
 		HelpFormatter formatter = new HelpFormatter();
 		/** add null comparator so options are sorted in original order */
@@ -371,19 +207,16 @@ public class NestedIn {
 				System.exit(0);
 			}
 			
-			if (line.hasOption("directory"))  indir      = line.getOptionValue("directory");
-			if (line.hasOption("output"))       outHGT     = line.getOptionValue("output");
-			
+			if (line.hasOption("directory")) indir         = line.getOptionValue("directory");
+			if (line.hasOption("output"))    outHGT        = line.getOptionValue("output");
 			if (line.hasOption("donor"))     donor         = line.getOptionValue("donor");
 			if (line.hasOption("optional"))  optionals     = line.getOptionValue("optional");
 			if (line.hasOption("ignore"))    ignored       = line.getOptionValue("ignore");
-
 			if (line.hasOption("cutoff"))    cut           = Double.parseDouble(line.getOptionValue("cutoff")) ;
-			
 			if (line.hasOption("ssnode"))    minStrongNode = Integer.parseInt(line.getOptionValue("ssnode"));
 			if (line.hasOption("asnode"))    minAllNode    = Integer.parseInt(line.getOptionValue("asnode"));
-			
 			if (line.hasOption("ingroup"))   getInGroup    = true;
+			if (line.hasOption("thread"))    thread        = Integer.parseInt(line.getOptionValue("thread"));
 		}
 		catch( ParseException exp) {
 			System.out.println( "Unexpected exception: " + exp.getMessage());
@@ -406,9 +239,7 @@ public class NestedIn {
 	}
 	
 	/** make output directory based on input arguments */
-	private void setOutputFileAandDirectory() {
-		//System.out.println("Output: " + outHGT);
-		
+	private void setOutputFileAandDirectory() {		
 		/** if outHGT is not specified, make output directory based on input arguments */
 		if (outHGT.isEmpty()) {
 			outHGT = indir;
@@ -428,8 +259,6 @@ public class NestedIn {
 		/** create output directory and figure out out-file */
 		outDir = outHGT + ".trees";
 		new File(outDir).mkdirs();
-		outHGT = outHGT + ".txt";
-		//System.out.println("Output: " + outDir);
+		outHGT = outHGT + ".candidates.txt";
 	}
-	
 }
