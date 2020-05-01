@@ -1,5 +1,11 @@
 # NestedIn
-NestedIn is a standalone command line tool to search for pattern of horizontal gene transfer (HGT) in phylogenetic trees. It is a Java implementation of the HGT scanning function that were used in research papers, Fan et al (in submission), [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, or linux) with a Java installation. Simply download the [NestedIn.jar file](https://github.com/HUAN-QIU/NestedIn/releases/tag/v1.0) and you are ready to go.
+
+### NestedIn and its research project are now published in Science Advance, a peer-reviewed multidisciplinary scientific journal: 
+
+### [Phytoplankton pangenome reveals extensive prokaryotic horizontal gene transfer of diverse functions. Science Advances  29 Apr 2020, Vol. 6, no. 18, eaba0111](https://advances.sciencemag.org/content/6/18/eaba0111)
+
+##
+NestedIn is a standalone command line tool to search for pattern of horizontal gene transfer (HGT) in phylogenetic trees. It is a Java implementation of the HGT scanning function that were used in research papers, [Fan and Qiu et al (Apr. 2020)](https://advances.sciencemag.org/content/6/18/eaba0111), [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, or linux) with a Java installation. Simply download the [NestedIn.jar file](https://github.com/HUAN-QIU/NestedIn/releases/tag/v1.0) and you are ready to go.
 
 ## 1. Test if your computer has Java installed
 In command prompt / terminal, type:
@@ -19,7 +25,7 @@ If no such verson information is reported, you probably do not have java install
 Download the NestedIn.jar https://github.com/HUAN-QIU/NestedIn/releases/tag/v2.0 and save the jar file to, for example, your desktop "\~/Desktop". And download the Example_data.tar.zip to your desktop "\~/Desktop". Unzip the Example_data directory that contains an example input directory 'mytrees' and example outputs 'exampleOutput.trees' and 'exampleOutput.txt'. Now you want to find all trees having the query nested within proteobacterial sequences and at least one of the interier nodes supporting query-bacteria monophyly have high bootstrap values (say >90), so type in terminal console:
 ```
 cd ~/Desktop/Example_data
-java -jar ~/Desktop/NestedIn.jar --directory mytrees --donor Proteoacteria --cutoff 90
+java -jar ~/Desktop/NestedIn.jar --directory mytrees --donor Proteobacteria --cutoff 90
 ```
 You will get screen ouput:
 ```
