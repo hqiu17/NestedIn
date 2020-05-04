@@ -5,7 +5,7 @@
 ### [Phytoplankton pangenome reveals extensive prokaryotic horizontal gene transfer of diverse functions. Science Advances  29 Apr 2020, Vol. 6, no. 18, eaba0111](https://advances.sciencemag.org/content/6/18/eaba0111)
 
 ##
-NestedIn is a standalone command line tool to search for pattern of horizontal gene transfer (HGT) in phylogenetic trees. It is a Java implementation of the HGT scanning function that were used in research papers, [Fan and Qiu et al (Apr. 2020)](https://advances.sciencemag.org/content/6/18/eaba0111), [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, or linux) with a Java installation. Simply download the [NestedIn.jar file](https://github.com/HUAN-QIU/NestedIn/releases/tag/v1.0) and you are ready to go.
+NestedIn is a standalone command line tool to search for pattern of horizontal gene transfer (HGT) in phylogenetic trees. It is a Java implementation of the HGT scanning function that were used in research papers, [Fan and Qiu et al (Apr. 2020)](https://advances.sciencemag.org/content/6/18/eaba0111), [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, or linux) with a Java installation. Simply download the [NestedIn.jar file](https://github.com/HUAN-QIU/NestedIn/releases/tag/v2.0) and you are ready to go.
 
 ## 1. Test if your computer has Java installed
 In command prompt / terminal, type:
