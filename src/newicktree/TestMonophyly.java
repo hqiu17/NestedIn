@@ -19,7 +19,7 @@ public class TestMonophyly {
 	private int nbStrongMonophyleticNodes = 0;
 	private int nbWeakMonophyleticNodes = 0;
 	private int nbAdjustedMonophyleticNodes = -1;
-	private int minOutGroupSize = 5;
+	private int minOutGroupSize = 0;
 	
 	private ArrayList<String> supportDonorsAndOptionals = new ArrayList<String>();
 	
@@ -33,7 +33,7 @@ public class TestMonophyly {
 	 * @param support_cut a double as cutoff for branch support
 	 * @param optionals a string for optional species. Multiple species are separated by comma ','.
 	 * @param ignored a string for species to be ignored. Multiple species are separated by comma ','.
-	 * @param minOutGroupSize an integer to define the minimal number of sequences in outgroup (default = 5).
+	 * @param minOutGroupSize an integer to define the minimal number of sequences in outgroup (default = 0).
 	 */
 	public TestMonophyly(List<String> bipartitions, String query, String donor,
 			double support_cut, String optionals, String ignored, int minOutGroupSize) {
