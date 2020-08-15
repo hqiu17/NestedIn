@@ -135,3 +135,9 @@ To specify number of **thread**s to use. The default value is 1.
 java -jar ~/Desktop/NestedIn.jar --directory ~/Desktop/mydir --donor Proteobacteria --thread 2
 ```
 This command executes a scan using two threads.
+
+#### 4.3.9 --outgroupsize (-ogs)
+To specify a cut-off for the minimal number of sequences in outgroup. The default value is 0 programmably. To consider only valide tree with 4 or more sequences in the outgroup, the following command will do:
+```
+java -jar ~/Desktop/NestedIn.jar --directory ~/Desktop/mydir --donor Proteobacteria --outgroupsize 4
+```
