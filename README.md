@@ -22,7 +22,7 @@ If no version is reported, you likely have no java.
 If no such verson information is reported, you probably do not have java installed yet. Go to the java download page https://www.oracle.com/technetwork/java/javase/downloads/index.html and download and install the latest version of Java development kit (JDK).
 
 ## 2. Quick start:
-Download the NestedIn.jar https://github.com/HUAN-QIU/NestedIn/releases/tag/v2.0 and save the jar file to, for example, your desktop "\~/Desktop". And download the Example_data.tar.zip to your desktop "\~/Desktop". Unzip the Example_data directory that contains an example input directory 'mytrees' and example outputs 'exampleOutput.trees' and 'exampleOutput.txt'. Now you want to find all trees having the query nested within proteobacterial sequences and at least one of the interier nodes supporting query-bacteria monophyly have high bootstrap values (say >90), so type in terminal console:
+Download the latest version of NestedIn.jar https://github.com/HUAN-QIU/NestedIn/releases/tag/v2.1 and save this jar file to, for example, your desktop "\~/Desktop". And download the Example_data.tar.zip to your desktop "\~/Desktop". Unzip the Example_data directory that contains an example input directory 'mytrees' and example outputs 'exampleOutput.trees' and 'exampleOutput.txt'. Now you want to find all trees having the query nested within proteobacterial sequences and at least one of the interier nodes supporting query-bacteria monophyly have high bootstrap values (say >90), so type in terminal console:
 ```
 cd ~/Desktop/Example_data
 java -jar ~/Desktop/NestedIn.jar --directory mytrees --donor Proteobacteria --cutoff 90
