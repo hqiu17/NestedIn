@@ -13,7 +13,11 @@ import newicktree.NewickTree;
 import newicktree.TestMonophyly;
 import progress.Bar;
 
-
+/**
+ * 
+ * @author shadow
+ *
+ */
 public class Task extends Thread{
 	List<Path> files = new ArrayList<Path>();
 	CountSyn count = new CountSyn();
@@ -23,14 +27,31 @@ public class Task extends Thread{
 	String ignored;
 	int minStrongNode;
 	int minAllNode;
+	int minOutGroupSize;
 	ArrayList<String> results = new ArrayList<String>();
 	String outDir;
 	boolean getInGroup = false;
 	Bar progress = new Bar(100);
 	
+	/**
+	 * Constructor
+	 * @param files a list containing a series of file paths
+	 * @param count a CountSyn object for task counting across threads 
+	 * @param donor a string for donor species. Multiple species are separated by comma ','.
+	 * @param cut a double as cutoff for minimal branch support
+	 * @param optionals a string for optional species. Multiple species are separated by comma ','.
+	 * @param ignored a string for species to be ignored. Multiple species are separated by comma ','.
+	 * @param minStrongNode an integer defining minimal number of nodes supporting desired monophyly strongly.
+	 * @param minAllNode an integer defining minimal number of all nodes supporting desired monophyly regardless of support levels.
+	 * @param results a list holding strings for results.
+	 * @param outDir a string defining output directory
+	 * @param getInGroup boolean whether or not to retrieve sequences in monophyly ingroup
+	 * @param minOutGroupSize an integer defining the minimal number of sequences required in outgroup
+	 * @param progress a Bar object
+	 */
 	public Task(List<Path> files, CountSyn count, String donor, double cut, String optionals, 
 			    String ignored, int minStrongNode, int minAllNode, ArrayList<String> results, 
-			    String outDir, boolean getInGroup, Bar progress) {
+			    String outDir, boolean getInGroup, int minOutGroupSize, Bar progress) {
 		this.files = files;
 		this.count = count;
 		this.donor = donor;
@@ -42,32 +63,36 @@ public class Task extends Thread{
 		this.results = results;
 		this.outDir = outDir;
 		this.getInGroup = getInGroup;
+		this.minOutGroupSize = minOutGroupSize; 
 		this.progress = progress;
 	}
 	
+	/**
+	 * Launch scanning for the whole set of input trees
+	 */
 	public void run() {
 		while(true){
 			int index = this.count.getNext() -1 ;
 			if (index>=files.size()) break;
-			String code = Atree( files.get(index).toString(), donor, cut, optionals, ignored);
+			String code = Atree( files.get(index).toString(), donor, cut, optionals, ignored, minOutGroupSize);
 			if (!code.isEmpty()) results.add(code);
 			progress.grow(index+1);
 		}
 	}
 	
 	/** 
-	 * examine a single tree. If input tree meets criteria, 
+	 * Examine a single tree. If input tree meets criteria, 
 	 * 1) write the tree the output directory
 	 * 2) return a string encoding node information: "query \t strong nodes \t weak nodes \t all nodes"
 	 * if input tree fails, return an empty string
-	 * @param intree
-	 * @param donor
-	 * @param cut
-	 * @param optionals
-	 * @param ignored
+	 * @param intree a string for path leading to the newick tree file.
+	 * @param donor a string for the query species.
+	 * @param cut a double defining brach support cutoff
+	 * @param optionals a string for species to be allowed in monophyletic group
+	 * @param ignored a string for species to be ignored 
 	 * @return string
 	 */
-	public String Atree (String intree, String donor, double cut, String optionals, String ignored) {
+	public String Atree (String intree, String donor, double cut, String optionals, String ignored, int minOutGroupSize) {
 
 		String query = getQuery(intree);
 		if (query.isEmpty()) return "";
@@ -92,16 +117,18 @@ public class Task extends Thread{
 		// create NewickTree object and launch decomposition
 		NewickTree tree = new NewickTree(line);
 		List<String> bp = tree.getBipartitions(query);
-		TestMonophyly test = new TestMonophyly(bp, query, donor, cut, optionals, ignored);
+		TestMonophyly test = new TestMonophyly(bp, query, donor, cut, optionals, ignored, minOutGroupSize);
 		test.testExclusive();
-		//test.testGeneralized();		
+		
+		/* test monophyly with a limited irrelevant sequences. TBD*/
+		//test.testGeneralized();
 
 		/** get destine of the input tree */
 		int myFate = fate(test.getStrongNodes(), test.getWeakNodes(), test.getAdjustedStrongNodes());
 		
 		/** if input tree meet criteria, do the following */
 		if (myFate > 1 ) {
-			/** 1) write input tree to output directory */
+			/* 1) write input tree to output directory */
 			String outputrees = outDir + "/" + filename;
 			try{
 				FileWriter writer = new FileWriter(outputrees);
@@ -112,7 +139,7 @@ public class Task extends Thread{
 				System.out.println("#-> errorous writing tree file: " + outputrees);
 			}
 			
-			/** 2) if requested, write ingroup details to output directory */
+			/* 2) if requested, write ingroup details to output directory */
 			if (getInGroup) {
 				String outputInGroupSeqs = outDir + "/" + filename + ".ingroup.txt";
 				try {
@@ -127,7 +154,7 @@ public class Task extends Thread{
 				}
 			}
 			
-			/** 3) make coded node information and return */
+			/* 3) make coded node information and return */
 			String outcome = query +"\t"+ 
 							 test.getStrongNodes() +"\t"+ 
 							 test.getWeakNodes() + "\t" + 
@@ -137,6 +164,10 @@ public class Task extends Thread{
 		}
 		
 		return "";
+	}
+	
+	public String Atree (String intree, String donor, double cut, String optionals, String ignored) {
+		return Atree(intree, donor, cut, optionals, ignored, minOutGroupSize);
 	}
 	public String Atree (String intree, String donor, double cut, String optionals) {
 		String ignored = new String();
@@ -160,7 +191,15 @@ public class Task extends Thread{
 		String optionals = new String();
 		return Atree(str, donor, cut, optionals);
 	}
-		
+	
+	/**
+	 * Define the fate bi-partition
+	 * @param strong an integer for the number of nodes strongly supporting desired monophyly
+	 * @param weak an integer for the number of nodes weakly supporting desired monophyly
+	 * @param fixed an integer for the number of nodes nodes supporting desired monophyly after fixing
+	 *        a limited number of potential contaminations
+	 * @return a integer coding for different fates of a tree ('9': strong; '2': fine; '1': week; '0': failed)
+	 */
 	private int fate (int strong, int weak, int fixed) {
 		int mystrong = strong + fixed;
 		int myall    = strong + weak + fixed;
@@ -195,6 +234,11 @@ public class Task extends Thread{
 		return query;
 	}
 	
+	/**
+	 * Extract query from tree file name
+	 * @param input a string for input tree fine name
+	 * @return a string for query sequence name
+	 */
 	public String getQuery(String input) {
 		String query = null;
 		query = getQuerySpecial(input, "_2refseq");
@@ -204,8 +248,5 @@ public class Task extends Thread{
 		if (query == null) query = getQuerySpecial(input, ".");
 		return query;
 	}
-	
-	
-	
-	
+
 }

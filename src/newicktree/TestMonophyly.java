@@ -19,10 +19,42 @@ public class TestMonophyly {
 	private int nbStrongMonophyleticNodes = 0;
 	private int nbWeakMonophyleticNodes = 0;
 	private int nbAdjustedMonophyleticNodes = -1;
+	private int minOutGroupSize = 5;
 	
 	private ArrayList<String> supportDonorsAndOptionals = new ArrayList<String>();
 	
-	// constructor01
+	// constructor1
+	
+	/**
+	 * Constructor
+	 * @param bipartitions a string containing ingroup and outgroup
+	 * @param query a string for query species
+	 * @param donor a string for donor species. Multiple species are separated by comma ','.
+	 * @param support_cut a double as cutoff for branch support
+	 * @param optionals a string for optional species. Multiple species are separated by comma ','.
+	 * @param ignored a string for species to be ignored. Multiple species are separated by comma ','.
+	 * @param minOutGroupSize an integer to define the minimal number of sequences in outgroup (default = 5).
+	 */
+	public TestMonophyly(List<String> bipartitions, String query, String donor,
+			double support_cut, String optionals, String ignored, int minOutGroupSize) {
+		this.bipartitions = bipartitions;
+		this.query = query;
+		this.donor = donor;
+		this.support_cut = support_cut;
+		this.optionals = optionals;
+		this.ignored = ignored;
+		this.minOutGroupSize = minOutGroupSize;
+	}
+
+	/**
+	 * Constructor
+	 * @param bipartitions a string containing ingroup and outgroup.
+	 * @param query a string for query species.
+	 * @param donor a string for donor species. Multiple species are separated by comma ','.
+	 * @param support_cut a double as cutoff for minimal branch support.
+	 * @param optionals a string for optional species. Multiple species are separated by comma ','.
+	 * @param ignored a string for species to be ignored. Multiple species are separated by comma ','. 
+	 */
 	public TestMonophyly(List<String> bipartitions, String query, String donor,
 			double support_cut, String optionals, String ignored) {
 		this.bipartitions = bipartitions;
@@ -32,7 +64,14 @@ public class TestMonophyly {
 		this.optionals = optionals;
 		this.ignored = ignored;
 	}
-	// constructor02
+
+	/**
+	 * Constructor
+	 * @param bipartitions a string containing ingroup and outgroup
+	 * @param query a string for query species
+	 * @param donor a string for donor species. Multiple species are separated by comma ','.
+	 * @param support_cut a double as cutoff for branch support
+	 */
 	public TestMonophyly(List<String> bipartitions, String query, String donor,
 			double support_cut) {
 		this.bipartitions = bipartitions;
@@ -41,17 +80,21 @@ public class TestMonophyly {
 		this.support_cut = support_cut;
 	}
 	
-	/*
-	 *  core functions
+	/**
+	 * Test all bi-partitions of a tree for monophyletic relationship.
 	 */
-
 	public void testExclusive() {
-		AllBipartitions tree = new AllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored);
+		AllBipartitions tree = new AllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored, minOutGroupSize);
 		nbAdjustedMonophyleticNodes = 0;
 		nbStrongMonophyleticNodes = tree.getStrongNodes();
 		nbWeakMonophyleticNodes = tree.getWeakNodes();
 		supportDonorsAndOptionals = tree.getSupportDonorsAndOptionals();
 	}
+	
+	/**
+	 * Test all bi-partitions of a tree for monophyletic relationship allowing 
+	 * a limited number of irrelevant sequences (due to contamination).
+	 */
 	public void testGeneralized() {
 		AllBipartitionsGeneralized tree = new AllBipartitionsGeneralized(bipartitions, query, donor, support_cut, optionals, ignored);
 		nbAdjustedMonophyleticNodes = tree.getAdjustedStrongNodes(); 
@@ -75,6 +118,7 @@ public class TestMonophyly {
 	public ArrayList<String> getSupportDonorsAndOptionals(){
 		return supportDonorsAndOptionals;
 	}
+	
 	/*
 	 * 
 	 */

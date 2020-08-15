@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ABipartition {
 	
-	/**
+	/*
 	 * Minimal number of donor sequences in in-group
 	 * (for nested position, 1 is sufficient for a monophyly.
 	 * for sole monophyly, this number might need to be increased.
@@ -15,28 +15,24 @@ public class ABipartition {
 	 */
 	private final int MINIMAL_DONOR_NB = 1;
 	
-	/** different status and coding */
+	/* different status and their coding */
 	private final int MONOPHYLY     =  1;
 	private final int NONMONOPHYLY  =  0;
 	private final int ADJUSTABLE    = -1;
 	private final int NODONOR       = -3;
-	// set to -2, if query is not found in the tree (e.g., due to short length/large divergence)
+	// set to 0, if query is not found in the tree (e.g., due to short length/large divergence)
 	private int OTHERSCENARIO = 0;
 
-	/** string variables */
+	/* string variables */
 	private String bipartition = new String();
-	private String ingroup;
-	/** 
-	 * later version could consider filtering based on out-group 
-	 * taxonamic composition. comment out for now
-	 */
-	//private String outgroup;
+	private String ingroup = new String();
+	private String outgroup = new String();
 
-	/** number of different donors */
+	/* number of different donors */
 	private int nb_donor;
 	//private int nb_optional;
 	
-	/** Lists holding donor sequences, optional sequences and irrelevant sequences */
+	/* Lists holding donor sequences, optional sequences and irrelevant sequences */
 	private ArrayList<String> irrelevant= new ArrayList<String>();
 	private ArrayList<String> donorSeqs = new ArrayList<String>();
 	private ArrayList<String> optionSeqs= new ArrayList<String>();
@@ -45,7 +41,7 @@ public class ABipartition {
 	 * Constructor 
 	 * Input is two partitions joined by "\t". 
 	 * In each partition, sequences are separated by ",".
-	 * @param bipartition a string
+	 * @param bipartition a newick tree string
 	 */
 	public ABipartition(String bipartition) { 
 		this.bipartition = bipartition;
@@ -53,37 +49,56 @@ public class ABipartition {
 	
 	/**
 	 * Return status of bipartition
+	 * @return integer coding: 1 (monophyly), 0 (nonmonophyly), -1 (adjustable nonmonophyly), -3 (no donor found)
 	 */
 	public int getStatus(){
 		if (OTHERSCENARIO != 0) {
 			return OTHERSCENARIO;
 		}else if ( nb_donor >= MINIMAL_DONOR_NB) {
 			if (irrelevant.isEmpty()) {
-				/** If no irrelevant taxon presents, monophyly is assumed */
+				/* If no irrelevant taxon presents, monophyly is assumed */
 				return MONOPHYLY;
 			}else if (irrelevant.size()<3){
-				/** 
-				 * If <3 sequences from irrelevant taxa presents, this bipartition is adjustable 
-				 * This is a special type of non-monophyly. The irrelevant sequences might be due to contamination 	
+				/* If <3 sequences from irrelevant taxa presents, this bipartition is adjustable 
+				 * This is a special type of non-monophyly. The irrelevant sequences might be due 
+				 * to rare contamination 	
 				 */				
-				return ADJUSTABLE;				
+				return ADJUSTABLE;			
 			}else {
-				/** If no irrelevant taxon presents, monophyly is assumed */
+				/* If no irrelevant taxon presents, monophyly is assumed */
 				return NONMONOPHYLY;
 			}
 		}else{
-			/** if no donor sequence in in-group partition */
+			/* if no donor sequence in in-group partition */
 			return NODONOR; 
 		}
 	}
+	
+	/**
+	 * Get the outgroup status
+	 * @param cutoff a integer as a cutoff for the minimal number of sequences included in outgroup 
+	 * @return status returns '0' when outgroup is valid and '-100' if otherwise
+	 */
+	public int getOutgroupStatus(int cutoff){
+		int status = -100;
+		if (outgroup.isEmpty()) return status;
 
-	/** return lists holding donor sequences, optional sequences and irrelevant sequences */
+		String[] leaves = outgroup.split(",");
+		if (leaves.length >= cutoff) status = 0;		
+		return status;
+	}
+
+	/** return a list holding donor sequences */
 	public List<String> getDonorSeqs(){
 		return donorSeqs;
 	}
+	
+	/** return a list holding optional sequences */
 	public List<String> getOptionalSeqs(){
 		return optionSeqs;
-	}	
+	}
+	
+	/** return a lists holding irrelevant sequences if adjustable nonmonophyly*/
 	public List<String> getMinorContamination(){
 		return irrelevant;
 	}
@@ -120,10 +135,6 @@ public class ABipartition {
 					//if (!optionals.isEmpty() && Arrays.asList(optionals.split(",")).stream().anyMatch(isOptional(l))) {
 					if (optionals.length()>0 && Arrays.asList(optionals.split(",")).stream().anyMatch(l::contains)) {
 						optionSeqs.add(l);
-					//if ( optionals.length()>0 && l.contains(optionals)){
-						//nb_optional++;
-						// do nothing
-						//System.out.println("#optional " + optionals + "\t" + l);
 					} else if (ignored.length()>0 && Arrays.asList(ignored.split(",")).stream().anyMatch(l::contains) ) {
 							// do nothing
 					} else {
@@ -134,24 +145,27 @@ public class ABipartition {
 			}
 		}
 	}
+	
 	public void checkIngroup(String query, String donor, String optionals){
 		String ignored = new String();
 		checkIngroup(query, donor, optionals, ignored);
 	}
+	
 	public void checkIngroup(String query, String donor){
 		String optionals = new String();
 		String ignored = new String();
 		checkIngroup(query, donor, optionals, ignored);
 	}
 
-
-	// figure out which one of the two partitions contains query (ie, in-group)
+	/** figure out which one of the two partitions contains query (ie, in-group) */
 	private void setInAndOutGroup(String query) {
 		String[] partitions = bipartition.split("\t");
 		if (partitions[0].contains(query)) {
 			this.ingroup = partitions[0];
+			this.outgroup = partitions[1];
 		} else if (partitions[1].contains(query)) {
 			this.ingroup = partitions[1];
+			this.outgroup = partitions[0];
 		}else {  ///???
 			this.ingroup = "";
 		}

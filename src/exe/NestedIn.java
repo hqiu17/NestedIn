@@ -22,7 +22,7 @@ package exe;
  * specified pattern.
  *
  * @author  Huan Qiu
- * @version 2.0
+ * @version 3
  */
 
 import java.io.File;
@@ -55,9 +55,10 @@ public class NestedIn {
 	private boolean getInGroup = false;
 	private int    minStrongNode  = 1;
 	private int    minAllNode     = 2;
+	private int    minOutGroupSize = 0;
 	private int    thread         = 1;
 	private String basicCmd  = "java -jar NestedIn.jar -dir mydirectory -don mydonor ...";
-	private String version   = "NestedIn (v2.0)";
+	private String version   = "NestedIn (v2.1)";
 	
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
@@ -71,9 +72,9 @@ public class NestedIn {
 		myParser.setOutputFileAandDirectory();
 		
 		/** print out mandatory parameters onto console */
-		System.out.println("direcotry:     " + myParser.indir);
-		System.out.println("donor(s):      " + myParser.donor);
-		System.out.println("cut-off:       " + myParser.cut);
+		System.out.println("direcotry: " + myParser.indir);
+		System.out.println("donor(s): " + myParser.donor);
+		System.out.println("branch support cutoff: " + myParser.cut);
 		
 		/** print out optional parameters onto console */
 		if (myParser.optionals.length()>0) System.out.println("optional taxa: " + myParser.optionals);
@@ -83,8 +84,11 @@ public class NestedIn {
 			if (myParser.minStrongNode>1) {
 				System.out.println("all node number cutoff   : " + Integer.toString(myParser.minAllNode));
 			} else {
-				System.out.println("all node number cutoff: " + Integer.toString(myParser.minAllNode));
+				System.out.println("all node number cutoff   : " + Integer.toString(myParser.minAllNode));
 			}
+		}
+		if (myParser.minOutGroupSize != 0){
+			System.out.println("outgroup size cutoff: " + Integer.toString(myParser.minOutGroupSize));
 		}
 		
 		/** 
@@ -145,7 +149,7 @@ public class NestedIn {
 		ArrayList<Task> tasks = new ArrayList<Task>(); 
 		for (int i=1; i<=thread; i++) {
 			Task task = new Task(files, count, donor, cut, optionals, ignored, 
-					        minStrongNode, minAllNode, results, outDir, getInGroup, progress);
+					        minStrongNode, minAllNode, results, outDir, getInGroup, minOutGroupSize, progress);
 			tasks.add(task);
 			task.start();
 		}
@@ -163,8 +167,8 @@ public class NestedIn {
 	}
 
 	/**
-	 * parse command line input arguments
-	 * @param args
+	 * Parse command line input arguments
+	 * @param args command line arguments
 	 */
 	private void parseArgumentInputs(String[] args){
 		CommandLineParser cparser = new DefaultParser();
@@ -187,6 +191,7 @@ public class NestedIn {
 		
 		coptions.addOption("ssn", "ssnode"     , true,  "minimal Strongly Supported Nodes uniting query and donors (default=1)");
 		coptions.addOption("asn", "asnode"     , true,  "minimal number of All Supporting Nodes uniting query and donors (default=2)");
+		coptions.addOption("ogs", "outgroupsize", true,  "minimal OutGroup Size for a tree to be considered valid (default=5)");
 		
 		coptions.addOption("thd", "thread"     , true,  "number of threads to use (default=1)");
 		
@@ -216,6 +221,7 @@ public class NestedIn {
 			if (line.hasOption("ssnode"))    minStrongNode = Integer.parseInt(line.getOptionValue("ssnode"));
 			if (line.hasOption("asnode"))    minAllNode    = Integer.parseInt(line.getOptionValue("asnode"));
 			if (line.hasOption("ingroup"))   getInGroup    = true;
+			if (line.hasOption("outgroupsize"))  minOutGroupSize = Integer.parseInt(line.getOptionValue("outgroupsize"));
 			if (line.hasOption("thread"))    thread        = Integer.parseInt(line.getOptionValue("thread"));
 		}
 		catch( ParseException exp) {
@@ -238,7 +244,7 @@ public class NestedIn {
 
 	}
 	
-	/** make output directory based on input arguments */
+	/** Make output directory based on input arguments */
 	private void setOutputFileAandDirectory() {		
 		/** if outHGT is not specified, make output directory based on input arguments */
 		if (outHGT.isEmpty()) {
@@ -253,7 +259,8 @@ public class NestedIn {
 			}else {
 				if (minAllNode>2) outHGT = outHGT + "_Asn" + Integer.toString(minAllNode);
 			}
-				
+			if (minOutGroupSize>0) outHGT = outHGT + "_OutGrpSz" + Integer.toString(minOutGroupSize);
+			
 			outHGT = outHGT.replaceAll(",", "");
 		}
 		/** create output directory and figure out out-file */

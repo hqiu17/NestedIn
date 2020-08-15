@@ -13,23 +13,28 @@ import java.util.*;
 public class AllBipartitions {
 	private int nbStrongMonophyleticNodes=0;
 	private int nbWeakMonophyleticNodes  =0;
+	private int outgroupSizeCutoff = 5;
 	private ArrayList<String> supportDonorsAndOptionals = new ArrayList<String>();
 	private ArrayList<String> Donors       = new ArrayList<String>();
 	private ArrayList<String> DonorsStrong = new ArrayList<String>();
 	ArrayList<List<String>> minorContaminationsStrongNodes = new ArrayList<List<String>>();
 	ArrayList<List<String>> minorContaminationsWeakNodes   = new ArrayList<List<String>>();
 
+	public AllBipartitions(List<String> bipartitions, String query, String donor, double support_cut, String optionals, String ignored, int outgroupSize) {
+		outgroupSizeCutoff = outgroupSize;
+		visitAllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored, outgroupSize);
+	}
 	public AllBipartitions(List<String> bipartitions, String query, String donor, double support_cut, String optionals, String ignored) {
-		visitAllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored);
+		visitAllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored, outgroupSizeCutoff);
 	}
 	public AllBipartitions(List<String> bipartitions, String query, String donor, double support_cut, String optionals) {
 		String ignored = new String();
-		visitAllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored);
+		visitAllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored, outgroupSizeCutoff);
 	}
 	public AllBipartitions(List<String> bipartitions, String query, String donor, double support_cut) {
 		String optionals = new String();
 		String ignored = new String();
-		visitAllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored);
+		visitAllBipartitions(bipartitions, query, donor, support_cut, optionals, ignored, outgroupSizeCutoff);
 	}
 
 	
@@ -47,73 +52,71 @@ public class AllBipartitions {
 			                         String donor,
 		     						 double support_cut,
 		     						 String optionals,
-		     						 String ignored){
+		     						 String ignored,
+		     						 int outgroupSize 
+									){
 
-		/**
-		 * loop through bi-partitions and test them one by one. 
-		 * each bi-partition is in the format: support-value   "TAB"   one-half   "TAB"   the-other-half 
-		 * */
+		/*
+		 * Loop through bi-partitions and test them one by one. 
+		 * each bi-partition is in the format: 
+		 *   support-value   "TAB"   one-half   "TAB"   the-other-half 
+		 * 
+		 */
 		for (String l : bipartitions) {
-			
-			/**
+			/*
 			 * if 2 or more strongly supported nodes, break out of loop
 			 * this non-exhaustive search speeds up entire job, because not all bi-partitions need to examined
 			 */
-			/** leave it for now
+			/* leave it for now
 			if ( nbStrongMonophyleticNodes >=2 ) break;
 			*/
 			
-			/** break down the bi-partition string */
+			/* break down the bi-partition string */
 			String[] data = l.split("\t");
 			double mySupport = Double.parseDouble(data[1]) ;
 			String half01 = data[2].substring(1, data[2].length()-1);
 			String half02 = data[3].substring(1, data[3].length()-1);
 			
-			/** examine the bi-partition in ABipatition class */
+			/* examine the bi-partition in ABipatition class */
 			ABipartition bp = new ABipartition(half01+"\t"+ half02);
 			bp.checkIngroup(query, donor, optionals, ignored);
 			int aStatus = bp.getStatus();
+			aStatus += bp.getOutgroupStatus(outgroupSizeCutoff);
+//			System.out.println("aStatus1: " + aStatus);
 			
-			
-			if (aStatus >0) {				
-			/** if bi-partition supports query-donor monophyly */
-				
+			/* if bi-partition supports query-donor monophyly */		
+			if (aStatus >0) {
+				/* if node supports query-donor monophyly */
 				if (mySupport >= support_cut) {
-				/** if node supports query-donor monophyly */
-					
-					/** add in-group donors to variable Donors */
+					/* add in-group donors to variable Donors */
 					donorPopulationInRecord(bp.getDonorSeqs());
-					
-					/** test if this donor-group already presents in DonorsStrong. if so, skip */
+					/* test if this donor-group already presents in DonorsStrong. if so, skip */
 					if (donorPopulationInRecordStrong(bp.getDonorSeqs())) continue;
 					
-					/** increment strong monophyletic node */
+					/* increment strong monophyletic node */
 					//nbStrongMonophyleticNodes += aStatus;
 					
-					/** make record of in-group details */
+					/* make record of in-group details */
 					String record = new String(); 
 					record = Double.toString(mySupport) +"\t"+ String.join(",", bp.getDonorSeqs()) +"\t"+ String.join(",", bp.getOptionalSeqs());
 					supportDonorsAndOptionals.add(record);
-				
+				/* if node does not support query-donor monophyly */
 				} else if (mySupport > 0) {
-				/** if node does not support query-donor monophyly */
-					
-					/** test if this donor-group already met anywhere (in Donors). if so, skip */
+					/* test if this donor-group already met anywhere (in Donors). if so, skip */
 					if (donorPopulationInRecord(bp.getDonorSeqs())) continue;
 					
-					/** increment weak monophyletic node */
+					/* increment weak monophyletic node */
 					//nbWeakMonophyleticNodes   += aStatus;
 					
-					/** make record of in-group details */
+					/* make record of in-group details */
 					String record = new String();
 					record = Double.toString(mySupport) +"\t"+ String.join(",", bp.getDonorSeqs()) +"\t"+ String.join(",", bp.getOptionalSeqs());
 					supportDonorsAndOptionals.add(record);	
 				}
 				
+			/* in-group is adjustable containing minimal irrelevant sequences (<3)*/				
 			} else if (aStatus == -1) {
-			/** in-group is adjustable containing minimal irrelevant sequences (<3)*/
-				
-				/** if the collection of irrelevant sequences has something */
+				/* if the collection of irrelevant sequences has something */
 				if (! bp.getMinorContamination().isEmpty()) {
 					if (mySupport >= support_cut){
 						minorContaminationsStrongNodes.add(bp.getMinorContamination());
