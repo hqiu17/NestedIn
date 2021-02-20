@@ -1,11 +1,11 @@
 # NestedIn
 
-### NestedIn and its research project are now published in Science Advance, a peer-reviewed multidisciplinary scientific journal: 
+### NestedIn and its research project were published in Science Advance, a peer-reviewed multidisciplinary scientific journal: 
 
 ### [Phytoplankton pangenome reveals extensive prokaryotic horizontal gene transfer of diverse functions. Science Advances  29 Apr 2020, Vol. 6, no. 18, eaba0111](https://advances.sciencemag.org/content/6/18/eaba0111)
 
 ##
-NestedIn is a standalone command line tool to search for pattern of horizontal gene transfer (HGT) in phylogenetic trees. It is a Java implementation of the HGT scanning function that were used in research papers, [Fan and Qiu et al (Apr. 2020)](https://advances.sciencemag.org/content/6/18/eaba0111), [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, or linux) with a Java installation. Simply download the [NestedIn.jar file](https://github.com/HUAN-QIU/NestedIn/releases/tag/v2.0) and you are ready to go.
+NestedIn is a standalone command line tool to search for pattern of horizontal gene transfer (HGT) in phylogenetic trees. It is a Java implementation of the HGT scanning function that were used in research papers, [Fan and Qiu et al (Apr. 2020)](https://advances.sciencemag.org/content/6/18/eaba0111), [Qiu et al, 2013](https://www.cell.com/current-biology/fulltext/S0960-9822(13)01052-X) and [Qiu et al, 2015](https://onlinelibrary.wiley.com/doi/abs/10.1111/jpy.12294). This tool runs in any computater platform (Wondows, Mac, or linux) with a Java installation. Simply download the [NestedIn.jar file](https://github.com/HUAN-QIU/NestedIn/releases/tag/v2.1) and you are ready to go.
 
 ## 1. Test if your computer has Java installed
 In command prompt / terminal, type:
@@ -22,20 +22,26 @@ If no version is reported, you likely have no java.
 If no such verson information is reported, you probably do not have java installed yet. Go to the java download page https://www.oracle.com/technetwork/java/javase/downloads/index.html and download and install the latest version of Java development kit (JDK).
 
 ## 2. Quick start:
-Download the latest version of NestedIn.jar https://github.com/HUAN-QIU/NestedIn/releases/tag/v2.1 and save this jar file to, for example, your desktop "\~/Desktop". And download the Example_data.tar.zip to your desktop "\~/Desktop". Unzip the Example_data directory that contains an example input directory 'mytrees' and example outputs 'exampleOutput.trees' and 'exampleOutput.txt'. Now you want to find all trees having the query nested within proteobacterial sequences and at least one of the interier nodes supporting query-bacteria monophyly have high bootstrap values (say >90), so type in terminal console:
+Download the latest version of NestedIn.jar https://github.com/HUAN-QIU/NestedIn/releases/tag/v2.1 and save this jar file to, for example, your desktop "\~/Desktop". And download the Example_data.tar.zip to your desktop "\~/Desktop". Unzip the Example_data directory that contains an example input directory 'mytrees' and example outputs 'exampleOutput.trees' and 'exampleOutput.txt'. Now you want to find all trees having the query nested within proteobacterial sequences and at least one of the interior nodes supporting query-bacteria monophyly have high bootstrap values (say >90). For each qualifying interior, the corresponding outgroup contains at least 4 sequences. Type in terminal console:
 ```
 cd ~/Desktop/Example_data
-java -jar ~/Desktop/NestedIn.jar --directory mytrees --donor Proteobacteria --cutoff 90
+java -jar ~/Desktop/NestedIn.jar --directory mytrees --donor Proteobacteria --cutoff 90 --outgroupsize 4
 ```
 You will get screen ouput:
 ```
-direcotry:     mytrees
-donor(s):      Proteobacteria
-cut-off:       90.0
-take 1 seconds.------------------------->1.000
-8 trees meet user criteria.
+direcotry: mytrees
+donor(s): Proteobacteria
+branch support cutoff: 90.0
+outgroup size cutoff: 4
+take 2 seconds.------------------------->1.000
+5 trees meet user criteria.
 ```
 Compare the newly generated output directory and text file with the example ouputs. Hopefully they are of the same.
+
+To get a summary of all usage options, type the following command:
+```
+java -jar ./NestedIn.jar --help
+```
 
 ## 3. Why use NestedIn and what do you get from it?
 NestedIn searches for nested position of queries among sequences derived from donor species. 'Nested position' is a special type of query-donor monophyletic relation. It is defined as query-donor monophyletic relations that are supported by 'two or more' interior nodes. For example, in figure 1, query 'Porphyridium_cruentum_contig_3789' and five proteobacterial (donor) sequences form a simple monophyletic group and the query is not nested among donor sequences. In figure 2, query 'Porphyridium_cruentum_contig_3789' is nested among proteobacterial sequences with two highly supported nodes (black dots) supporting the query-donor monoohyly. This nested position of query among donor sequences provides a more convincing evidence of HGT and indicates the direction of HGT (e.g., proteobacteria-to-porphyridium in this case). NestedIn also allows search for simple query-donor monophyletic relations (e.g., as in Fig.1) with argument `--asnode 1 `.
